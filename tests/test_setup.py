@@ -79,8 +79,9 @@ def test_setup_success_has_explicit_order_and_final_receipts(tmp_path: Path) -> 
 
     def confirm(summary: str) -> bool:
         events.append("confirm-summary")
-        assert "Example Organization" in summary
-        assert "vpn.example.com" in summary
+        summary_lines = summary.splitlines()
+        assert summary_lines[0] == "Organization: Example Organization"
+        assert summary_lines[1] == "Gateway: vpn.example.com"
         assert "opaque-token" not in summary
         assert "?" not in summary
         for privileged_path in (

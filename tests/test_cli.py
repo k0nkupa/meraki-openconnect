@@ -74,10 +74,11 @@ def test_profile_validate_command_prints_sanitized_counts(
     assert main(["profile", "validate", str(candidate)]) == 0
     assert calls == [candidate]
     output = capsys.readouterr().out
-    assert "Example Organization" in output
-    assert "vpn.example.com" in output
-    assert "dns_rule_count: 1" in output
-    assert "health_check_count: 3" in output
+    report = dict(line.split(": ", 1) for line in output.splitlines())
+    assert report["name"] == "Example Organization"
+    assert report["gateway"] == "vpn.example.com"
+    assert report["dns_rule_count"] == "1"
+    assert report["health_check_count"] == "3"
 
 
 def test_setup_command_uses_exact_browser_options_and_prints_digest_after_success(
