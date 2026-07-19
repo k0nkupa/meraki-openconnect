@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS source release gate
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: 0.11.16
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Install native dependencies
+        run: brew install openconnect
+
+      - name: Sync locked Python environment
+        run: uv sync --frozen
+
+      - name: Run Python tests
+        run: uv run --frozen pytest -q
+
+      - name: Build and test native worker
+        run: make -C native clean test
+
+      - name: Validate Chrome extension JavaScript
+        run: node --check chrome-extension/background.js
+
+      - name: Run macOS app tests
+        run: |
+          xcodebuild \
+            -project macos/MerakiOpenConnect/MerakiOpenConnect.xcodeproj \
+            -scheme MerakiOpenConnect \
+            -destination 'platform=macOS' \
+            -derivedDataPath macos/MerakiOpenConnect/.derivedData \
+            test
+
+      - name: Build Python release artifacts
+        run: uv build
+
+      - name: Check public release tree
+        run: scripts/check-public-tree.sh

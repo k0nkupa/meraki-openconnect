@@ -3,7 +3,7 @@ set -eu
 
 failures=0
 
-generated_pattern='(^|/)(profile\.json|settings\.json|policy\.conf|\.env)$|(^|/)(graphify-out|docs/superpowers/plans|xcuserdata)(/|$)|(^|/)\.derivedData|\.(pem|key)$|(^|/)native/(meraki-openconnect-native|tests/test_(policy|protocol))$'
+generated_pattern='(^|/)(profile\.json|settings\.json|policy\.conf|\.env)$|(^|/)(graphify-out|docs/superpowers|xcuserdata)(/|$)|(^|/)\.derivedData|\.(pem|key)$|(^|/)native/(meraki-openconnect-native|tests/test_(policy|protocol))$'
 generated=$(
   git ls-files -z |
     while IFS= read -r -d '' tracked; do
@@ -26,6 +26,17 @@ stale=$(
 if [ -n "$stale" ]; then
   printf '%s\n' 'stale private product or organization names were found:' >&2
   printf '%s\n' "$stale" >&2
+  failures=1
+fi
+
+unpinned_actions=$(
+  git grep -h -E '^[[:space:]]*uses:' -- '.github/workflows/*.yml' 2>/dev/null |
+    sed 's/[[:space:]]*#.*$//' |
+    grep -Ev '@[0-9a-f]{40}[[:space:]]*$' || true
+)
+if [ -n "$unpinned_actions" ]; then
+  printf '%s\n' 'GitHub Actions must be pinned to full commit hashes:' >&2
+  printf '%s\n' "$unpinned_actions" >&2
   failures=1
 fi
 
