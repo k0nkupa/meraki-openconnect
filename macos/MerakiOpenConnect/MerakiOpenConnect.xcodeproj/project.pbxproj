@@ -1,0 +1,305 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000020 /* MerakiOpenConnectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000060 /* MerakiOpenConnectApp.swift */; };
+		A00000000000000000000023 /* CLIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000063 /* CLIModels.swift */; };
+		A00000000000000000000025 /* ProcessVPNCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000065 /* ProcessVPNCLI.swift */; };
+		A00000000000000000000027 /* VPNController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000067 /* VPNController.swift */; };
+		A00000000000000000000028 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000068 /* MenuContentView.swift */; };
+		A00000000000000000000029 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000069 /* AppDelegate.swift */; };
+		A00000000000000000000021 /* CLIModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000062 /* CLIModelsTests.swift */; };
+		A00000000000000000000024 /* ProcessVPNCLITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000064 /* ProcessVPNCLITests.swift */; };
+		A00000000000000000000026 /* VPNControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000066 /* VPNControllerTests.swift */; };
+		A00000000000000000000022 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* XCTest.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000070 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000030;
+			remoteInfo = MerakiOpenConnect;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000010 /* Meraki OpenConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Meraki OpenConnect.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000011 /* MerakiOpenConnectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MerakiOpenConnectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000012 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		A00000000000000000000060 /* MerakiOpenConnectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MerakiOpenConnectApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000063 /* CLIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000065 /* ProcessVPNCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessVPNCLI.swift; sourceTree = "<group>"; };
+		A00000000000000000000067 /* VPNController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNController.swift; sourceTree = "<group>"; };
+		A00000000000000000000068 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
+		A00000000000000000000069 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A00000000000000000000061 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000000000000000000062 /* CLIModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIModelsTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000064 /* ProcessVPNCLITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessVPNCLITests.swift; sourceTree = "<group>"; };
+		A00000000000000000000066 /* VPNControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNControllerTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000041 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000044 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000022 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000004 /* MerakiOpenConnect */,
+				A00000000000000000000005 /* MerakiOpenConnectTests */,
+				A00000000000000000000006 /* Frameworks */,
+				A00000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000010 /* Meraki OpenConnect.app */,
+				A00000000000000000000011 /* MerakiOpenConnectTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000004 /* MerakiOpenConnect */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000060 /* MerakiOpenConnectApp.swift */,
+				A00000000000000000000063 /* CLIModels.swift */,
+				A00000000000000000000065 /* ProcessVPNCLI.swift */,
+				A00000000000000000000067 /* VPNController.swift */,
+				A00000000000000000000068 /* MenuContentView.swift */,
+				A00000000000000000000069 /* AppDelegate.swift */,
+				A00000000000000000000061 /* Info.plist */,
+			);
+			path = MerakiOpenConnect;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000005 /* MerakiOpenConnectTests */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000062 /* CLIModelsTests.swift */,
+				A00000000000000000000064 /* ProcessVPNCLITests.swift */,
+				A00000000000000000000066 /* VPNControllerTests.swift */,
+			);
+			path = MerakiOpenConnectTests;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000006 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000012 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000030 /* MerakiOpenConnect */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000055 /* Build configuration list for PBXNativeTarget "MerakiOpenConnect" */;
+			buildPhases = (
+				A00000000000000000000040 /* Sources */,
+				A00000000000000000000041 /* Frameworks */,
+				A00000000000000000000042 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MerakiOpenConnect;
+			productName = MerakiOpenConnect;
+			productReference = A00000000000000000000010 /* Meraki OpenConnect.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000031 /* MerakiOpenConnectTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000058 /* Build configuration list for PBXNativeTarget "MerakiOpenConnectTests" */;
+			buildPhases = (
+				A00000000000000000000043 /* Sources */,
+				A00000000000000000000044 /* Frameworks */,
+				A00000000000000000000045 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000071 /* PBXTargetDependency */,
+			);
+			name = MerakiOpenConnectTests;
+			productName = MerakiOpenConnectTests;
+			productReference = A00000000000000000000011 /* MerakiOpenConnectTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A00000000000000000000030 = { CreatedOnToolsVersion = 26.0; };
+					A00000000000000000000031 = { CreatedOnToolsVersion = 26.0; TestTargetID = A00000000000000000000030; };
+				};
+			};
+			buildConfigurationList = A00000000000000000000052 /* Build configuration list for PBXProject "MerakiOpenConnect" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = A00000000000000000000002;
+			productRefGroup = A00000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000030 /* MerakiOpenConnect */,
+				A00000000000000000000031 /* MerakiOpenConnectTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000042 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A00000000000000000000045 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000040 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000020 /* MerakiOpenConnectApp.swift in Sources */,
+				A00000000000000000000023 /* CLIModels.swift in Sources */,
+				A00000000000000000000025 /* ProcessVPNCLI.swift in Sources */,
+				A00000000000000000000027 /* VPNController.swift in Sources */,
+				A00000000000000000000028 /* MenuContentView.swift in Sources */,
+				A00000000000000000000029 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000043 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000021 /* CLIModelsTests.swift in Sources */,
+				A00000000000000000000024 /* ProcessVPNCLITests.swift in Sources */,
+				A00000000000000000000026 /* VPNControllerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000071 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000030 /* MerakiOpenConnect */;
+			targetProxy = A00000000000000000000070 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000050 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 13.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A00000000000000000000051 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 13.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_VERSION = 5.0; }; name = Release; };
+		A00000000000000000000053 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MerakiOpenConnect/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.k0nkupa.merakiopenconnect;
+				PRODUCT_MODULE_NAME = MerakiOpenConnect;
+				PRODUCT_NAME = "Meraki OpenConnect";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A00000000000000000000054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MerakiOpenConnect/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.k0nkupa.merakiopenconnect;
+				PRODUCT_MODULE_NAME = MerakiOpenConnect;
+				PRODUCT_NAME = "Meraki OpenConnect";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A00000000000000000000056 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.k0nkupa.merakiopenconnect.tests;
+				PRODUCT_NAME = MerakiOpenConnectTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Meraki OpenConnect.app/Contents/MacOS/Meraki OpenConnect";
+			};
+			name = Debug;
+		};
+		A00000000000000000000057 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.k0nkupa.merakiopenconnect.tests;
+				PRODUCT_NAME = MerakiOpenConnectTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Meraki OpenConnect.app/Contents/MacOS/Meraki OpenConnect";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000052 /* Build configuration list for PBXProject "MerakiOpenConnect" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000050, A00000000000000000000051); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00000000000000000000055 /* Build configuration list for PBXNativeTarget "MerakiOpenConnect" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000053, A00000000000000000000054); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00000000000000000000058 /* Build configuration list for PBXNativeTarget "MerakiOpenConnectTests" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000056, A00000000000000000000057); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}

@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Meraki OpenConnect local bridge",
+  "version": "0.1.0",
+  "permissions": ["cookies", "tabs", "nativeMessaging"],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Meraki OpenConnect local bridge"
+  }
+}

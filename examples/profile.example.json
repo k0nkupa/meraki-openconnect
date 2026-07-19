@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "organization": {
+    "display_name": "Example Organization"
+  },
+  "gateway": {
+    "host": "vpn.example.com"
+  },
+  "authentication": {
+    "type": "meraki-entra-saml",
+    "idp_host": "login.microsoftonline.com",
+    "issuer": "https://vpn.example.com/saml/sp/metadata/SAML",
+    "destination": "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/saml2",
+    "login_path": "/saml/sp/login",
+    "final_path": "/saml/sp/login_final",
+    "token_cookie_name": "acSamlv2Token"
+  },
+  "split_dns": [
+    {
+      "domain": "internal.example.com",
+      "nameservers": [
+        "192.0.2.53"
+      ]
+    }
+  ],
+  "health_checks": [
+    {
+      "type": "route",
+      "target": "192.0.2.53"
+    },
+    {
+      "type": "dns",
+      "name": "service.internal.example.com",
+      "record_type": "A"
+    },
+    {
+      "type": "tcp",
+      "host": "192.0.2.10",
+      "port": 443
+    }
+  ]
+}

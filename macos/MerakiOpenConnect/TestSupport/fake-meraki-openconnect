@@ -1,0 +1,35 @@
+#!/bin/sh
+
+printf '%s\n' "$*" >> "$HOME/invocations"
+env | sort > "$HOME/environment"
+
+case "$*" in
+  "doctor --json")
+    cat "$HOME/doctor.json"
+    if [ -f "$HOME/doctor-exit" ]; then
+      exit "$(cat "$HOME/doctor-exit")"
+    fi
+    ;;
+  "status --json")
+    cat "$HOME/status.json"
+    ;;
+  "connect")
+    printf '%s\n' "Meraki OpenConnect test connect"
+    sleep "$(cat "$HOME/connect-seconds")"
+    ;;
+  "disconnect")
+    if [ -f "$HOME/disconnect-seconds" ]; then
+      sleep "$(cat "$HOME/disconnect-seconds")"
+    fi
+    if [ -f "$HOME/disconnect-output" ]; then
+      cat "$HOME/disconnect-output"
+    else
+      printf '%s\n' "Meraki OpenConnect tunnel disconnected"
+    fi
+    if [ -f "$HOME/disconnect-exit" ]; then
+      printf '%s\n' "test disconnect failure" >&2
+      exit "$(cat "$HOME/disconnect-exit")"
+    fi
+    ;;
+  *) exit 64 ;;
+esac

@@ -1,0 +1,52 @@
+[project]
+name = "meraki-openconnect"
+version = "0.1.0"
+description = "Source-first macOS OpenConnect client for Meraki-compatible VPNs"
+requires-python = ">=3.13,<3.14"
+license = "GPL-3.0-or-later"
+dependencies = [
+  "lxml>=5,<7",
+  "openconnect-saml[chrome]==0.24.5",
+  "requests>=2.32,<3",
+]
+
+[project.scripts]
+meraki-openconnect = "meraki_openconnect.cli:entrypoint"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meraki_openconnect"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/native",
+  "/chrome-extension",
+  "/macos",
+  "/examples",
+  "/README.md",
+  "/SECURITY.md",
+  "/CONTRIBUTING.md",
+  "/LICENSE",
+]
+exclude = [
+  "/macos/MerakiOpenConnect/.derivedData*",
+  "/macos/MerakiOpenConnect/**/xcuserdata",
+  "/native/meraki-openconnect-native",
+  "/native/tests/test_policy",
+  "/native/tests/test_protocol",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"native" = "meraki_openconnect/_resources/native"
+"chrome-extension" = "meraki_openconnect/_resources/chrome-extension"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
