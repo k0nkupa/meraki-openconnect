@@ -1,6 +1,6 @@
-# Meraki OpenConnect
+# Meraki Connect
 
-Meraki OpenConnect is an unofficial, source-first macOS client for Meraki and
+Meraki Connect is an unofficial, source-first macOS client for Meraki and
 AnyConnect-compatible SSL VPN gateways. It uses OpenConnect for the tunnel and
 Google Chrome for visible Microsoft Entra SAML authentication.
 
@@ -13,7 +13,7 @@ owners.
 Copy this prompt and paste it into your AI coding agent:
 
 ```text
-Set up Meraki OpenConnect by following these instructions:
+Set up Meraki Connect by following these instructions:
 https://raw.githubusercontent.com/k0nkupa/meraki-openconnect/main/setup-instructions/setup.md
 ```
 
@@ -83,7 +83,7 @@ meraki-openconnect profile validate \
 A Cisco Secure Client XML profile is not a drop-in replacement for this JSON
 profile. Its display name and gateway can be useful input, but it normally does
 not provide the complete SAML, DNS, and health-check policy required by this
-client. Meraki OpenConnect does not currently import Cisco XML.
+client. Meraki Connect does not currently import Cisco XML.
 
 ## Load the Chrome extension
 
@@ -228,7 +228,7 @@ submitting changes or security reports.
 
 ## License
 
-Meraki OpenConnect is licensed under the
+Meraki Connect is licensed under the
 [GNU General Public License v3.0 or later](LICENSE).
 The bundled `vpnc-script` retains its upstream GPL-2.0-or-later notice and is
 distributed under GPL-3.0-or-later as part of this project.

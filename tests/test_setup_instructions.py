@@ -55,8 +55,22 @@ def test_readme_exposes_copyable_agent_setup_prompt() -> None:
     readme = (ROOT / "README.md").read_text()
 
     expected_prompt = (
-        "Set up Meraki OpenConnect by following these instructions:\n"
+        "Set up Meraki Connect by following these instructions:\n"
         f"{RAW_INSTRUCTIONS_URL}"
     )
     assert expected_prompt in readme
     assert INSTRUCTIONS.is_file()
+
+
+def test_public_docs_use_meraki_connect_product_name() -> None:
+    docs = (
+        ROOT / "README.md",
+        ROOT / "SECURITY.md",
+        ROOT / "setup-instructions" / "setup.md",
+        ROOT / "docs" / "designs" / "2026-07-20-agent-setup-prompt-design.md",
+    )
+
+    for path in docs:
+        text = path.read_text()
+        assert "Meraki Connect" in text, path
+        assert "Meraki OpenConnect" not in text, path

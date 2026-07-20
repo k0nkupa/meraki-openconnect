@@ -21,7 +21,7 @@ default branch; no older release line is currently maintained.
 
 ## Security boundary
 
-Meraki OpenConnect is designed around one validated organization policy and one
+Meraki Connect is designed around one validated organization policy and one
 root-owned policy snapshot. The privileged helper accepts only fixed named
 operations. Profiles cannot supply scripts, shell commands, filesystem paths,
 OpenConnect arguments, or arbitrary privileged actions.
