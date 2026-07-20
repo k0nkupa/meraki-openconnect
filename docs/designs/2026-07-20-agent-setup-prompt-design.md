@@ -3,7 +3,7 @@
 ## Goal
 
 Give prospective users a short prompt they can copy into a capable AI coding
-agent to install and configure Meraki OpenConnect from the public repository.
+agent to install and configure Meraki Connect from the public repository.
 The prompt delegates detailed work to a versioned, reviewable instruction file
 in this repository rather than embedding a long setup procedure on another
 site.
@@ -12,7 +12,7 @@ site.
 
 Add a README section that presents this copyable prompt:
 
-> Set up Meraki OpenConnect by following these instructions:
+> Set up Meraki Connect by following these instructions:
 > https://raw.githubusercontent.com/k0nkupa/meraki-openconnect/main/setup-instructions/setup.md
 
 The linked file will live at `setup-instructions/setup.md`. Keeping the short
@@ -52,7 +52,7 @@ The agent must pause rather than automate or infer:
 
 The agent must not ask the user to paste passwords, cookies, SAML assertions,
 VPN tokens, recovery codes, or other credentials into the chat. It must not
-treat a Cisco Secure Client XML profile as a complete Meraki OpenConnect
+treat a Cisco Secure Client XML profile as a complete Meraki Connect
 profile or invent missing organization policy.
 
 ## Safety and failure handling

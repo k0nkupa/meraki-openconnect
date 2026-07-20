@@ -1,12 +1,12 @@
-# Set up Meraki OpenConnect
+# Set up Meraki Connect
 
-You are installing and configuring Meraki OpenConnect from its official public
+You are installing and configuring Meraki Connect from its official public
 repository on the user's Mac. Work interactively and evidence-first. Explain
 what you found and obtain confirmation before installing packages, changing an
 existing installation, opening authentication, or requesting administrator
 authorization.
 
-Meraki OpenConnect is an unofficial, source-first client. It supports only an
+Meraki Connect is an unofficial, source-first client. It supports only an
 Apple Silicon Mac running macOS 13 or newer, one configured organization,
 Meraki/AnyConnect-compatible SSL VPN on port 443, Microsoft Entra SAML, and
 Google Chrome. Stop and report the mismatch if the user's environment is
