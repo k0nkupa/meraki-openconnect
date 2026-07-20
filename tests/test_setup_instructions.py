@@ -5,6 +5,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 INSTRUCTIONS = ROOT / "setup-instructions" / "setup.md"
+RAW_INSTRUCTIONS_URL = (
+    "https://raw.githubusercontent.com/k0nkupa/meraki-openconnect/"
+    "main/setup-instructions/setup.md"
+)
 
 
 def test_agent_setup_instructions_cover_commands_and_safety_boundaries() -> None:
@@ -45,3 +49,14 @@ def test_agent_setup_instructions_do_not_recommend_unsafe_shortcuts() -> None:
     )
     for fragment in forbidden_fragments:
         assert fragment not in text, fragment
+
+
+def test_readme_exposes_copyable_agent_setup_prompt() -> None:
+    readme = (ROOT / "README.md").read_text()
+
+    expected_prompt = (
+        "Set up Meraki OpenConnect by following these instructions:\n"
+        f"{RAW_INSTRUCTIONS_URL}"
+    )
+    assert expected_prompt in readme
+    assert INSTRUCTIONS.is_file()

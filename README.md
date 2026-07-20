@@ -8,6 +8,20 @@ This project is not affiliated with, endorsed by, or supported by Cisco or
 Meraki. Cisco, Meraki, and AnyConnect are trademarks of their respective
 owners.
 
+## Set up with an AI coding agent
+
+Copy this prompt and paste it into your AI coding agent:
+
+```text
+Set up Meraki OpenConnect by following these instructions:
+https://raw.githubusercontent.com/k0nkupa/meraki-openconnect/main/setup-instructions/setup.md
+```
+
+The agent will check compatibility and prerequisites, guide you through the
+private organization profile and Chrome extension, pause for authentication
+and administrator approval, and verify readiness without connecting the VPN
+automatically.
+
 ## Supported scope
 
 - Apple Silicon Mac running macOS 13 or newer.
