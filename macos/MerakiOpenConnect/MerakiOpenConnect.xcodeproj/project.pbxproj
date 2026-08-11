@@ -16,6 +16,8 @@
 		A00000000000000000000021 /* CLIModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000062 /* CLIModelsTests.swift */; };
 		A00000000000000000000024 /* ProcessVPNCLITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000064 /* ProcessVPNCLITests.swift */; };
 		A00000000000000000000026 /* VPNControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000066 /* VPNControllerTests.swift */; };
+		A0000000000000000000002A /* TunnelStatusIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006A /* TunnelStatusIconTests.swift */; };
+		A0000000000000000000002B /* TunnelStatusIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006B /* TunnelStatusIcon.swift */; };
 		A00000000000000000000022 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -43,6 +45,8 @@
 		A00000000000000000000062 /* CLIModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIModelsTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000064 /* ProcessVPNCLITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessVPNCLITests.swift; sourceTree = "<group>"; };
 		A00000000000000000000066 /* VPNControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNControllerTests.swift; sourceTree = "<group>"; };
+		A0000000000000000000006A /* TunnelStatusIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelStatusIconTests.swift; sourceTree = "<group>"; };
+		A0000000000000000000006B /* TunnelStatusIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelStatusIcon.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +96,7 @@
 				A00000000000000000000067 /* VPNController.swift */,
 				A00000000000000000000068 /* MenuContentView.swift */,
 				A00000000000000000000069 /* AppDelegate.swift */,
+				A0000000000000000000006B /* TunnelStatusIcon.swift */,
 				A00000000000000000000061 /* Info.plist */,
 			);
 			path = MerakiOpenConnect;
@@ -103,6 +108,7 @@
 				A00000000000000000000062 /* CLIModelsTests.swift */,
 				A00000000000000000000064 /* ProcessVPNCLITests.swift */,
 				A00000000000000000000066 /* VPNControllerTests.swift */,
+				A0000000000000000000006A /* TunnelStatusIconTests.swift */,
 			);
 			path = MerakiOpenConnectTests;
 			sourceTree = "<group>";
@@ -199,6 +205,7 @@
 				A00000000000000000000027 /* VPNController.swift in Sources */,
 				A00000000000000000000028 /* MenuContentView.swift in Sources */,
 				A00000000000000000000029 /* AppDelegate.swift in Sources */,
+				A0000000000000000000002B /* TunnelStatusIcon.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,6 +216,7 @@
 				A00000000000000000000021 /* CLIModelsTests.swift in Sources */,
 				A00000000000000000000024 /* ProcessVPNCLITests.swift in Sources */,
 				A00000000000000000000026 /* VPNControllerTests.swift in Sources */,
+				A0000000000000000000002A /* TunnelStatusIconTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
