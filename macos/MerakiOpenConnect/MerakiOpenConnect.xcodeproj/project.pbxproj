@@ -18,6 +18,7 @@
 		A00000000000000000000026 /* VPNControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000066 /* VPNControllerTests.swift */; };
 		A0000000000000000000002A /* TunnelStatusIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006A /* TunnelStatusIconTests.swift */; };
 		A0000000000000000000002B /* TunnelStatusIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006B /* TunnelStatusIcon.swift */; };
+		A0000000000000000000002C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000006C /* Assets.xcassets */; };
 		A00000000000000000000022 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -47,6 +48,7 @@
 		A00000000000000000000066 /* VPNControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNControllerTests.swift; sourceTree = "<group>"; };
 		A0000000000000000000006A /* TunnelStatusIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelStatusIconTests.swift; sourceTree = "<group>"; };
 		A0000000000000000000006B /* TunnelStatusIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelStatusIcon.swift; sourceTree = "<group>"; };
+		A0000000000000000000006C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 				A00000000000000000000068 /* MenuContentView.swift */,
 				A00000000000000000000069 /* AppDelegate.swift */,
 				A0000000000000000000006B /* TunnelStatusIcon.swift */,
+				A0000000000000000000006C /* Assets.xcassets */,
 				A00000000000000000000061 /* Info.plist */,
 			);
 			path = MerakiOpenConnect;
@@ -190,7 +193,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A00000000000000000000042 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A00000000000000000000042 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000002C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000045 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
@@ -236,6 +246,7 @@
 		A00000000000000000000053 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
@@ -257,6 +268,7 @@
 		A00000000000000000000054 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
