@@ -22,4 +22,13 @@ final class TunnelStatusIconTests: XCTestCase {
             ).shouldAnimate
         )
     }
+
+    func testReducedMotionSuppressesTransitionAnimation() {
+        XCTAssertFalse(
+            TunnelIconPresentation(phase: .connecting, reduceMotion: true).shouldAnimate
+        )
+        XCTAssertTrue(
+            TunnelIconPresentation(phase: .connecting, reduceMotion: false).shouldAnimate
+        )
+    }
 }
