@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum TunnelIconPresentation: Equatable {
@@ -23,75 +24,93 @@ enum TunnelIconPresentation: Equatable {
     var shouldAnimate: Bool {
         self == .transition
     }
+
+    static func nextActiveArc(after activeArc: Int) -> Int {
+        activeArc == 3 ? 1 : min(max(activeArc, 0) + 1, 3)
+    }
 }
 
 struct TunnelStatusIcon: View {
     let phase: AppPhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var activeArc = 0
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.27)) { timeline in
-            TunnelMark(activeArc: activeArc(at: timeline.date))
-                .frame(width: 18, height: 18)
-        }
+        Image(nsImage: TunnelMenuBarImage.image(activeArc: activeArc))
+            .renderingMode(.template)
+            .task(id: presentation) {
+                guard presentation.shouldAnimate else {
+                    activeArc = 0
+                    return
+                }
+
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(270))
+                    guard !Task.isCancelled else { return }
+                    activeArc = TunnelIconPresentation.nextActiveArc(after: activeArc)
+                }
+            }
         .accessibilityHidden(true)
     }
 
-    private func activeArc(at date: Date) -> Int {
-        guard TunnelIconPresentation(phase: phase, reduceMotion: reduceMotion).shouldAnimate else {
-            return 0
-        }
-        return Int(date.timeIntervalSinceReferenceDate / 0.27) % 3 + 1
+    private var presentation: TunnelIconPresentation {
+        TunnelIconPresentation(phase: phase, reduceMotion: reduceMotion)
     }
 }
 
-private struct TunnelMark: View {
-    let activeArc: Int
+enum TunnelMenuBarImage {
+    private static let size = NSSize(width: 18, height: 18)
+    private static let images = (0...3).map(makeImage)
 
-    var body: some View {
-        ZStack {
-            arch(left: 1.5, top: 1.5, right: 16.5, bottom: 15.5)
-                .stroke(.primary, style: strokeStyle)
-                .opacity(opacity(for: 3))
-            arch(left: 4.0, top: 4.0, right: 14.0, bottom: 14.5)
-                .stroke(.primary, style: strokeStyle)
-                .opacity(opacity(for: 2))
-            arch(left: 6.5, top: 6.5, right: 11.5, bottom: 13.5)
-                .stroke(.primary, style: strokeStyle)
-                .opacity(opacity(for: 1))
-            pathRails
-                .stroke(.primary, style: strokeStyle)
-        }
-        .drawingGroup()
+    static func image(activeArc: Int) -> NSImage {
+        images[min(max(activeArc, 0), 3)]
     }
 
-    private var strokeStyle: StrokeStyle {
-        StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+    private static func makeImage(activeArc: Int) -> NSImage {
+        let image = NSImage(size: size)
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        drawArch(left: 1.5, top: 16.5, right: 16.5, bottom: 2.5, opacity: opacity(for: 3, activeArc: activeArc))
+        drawArch(left: 4.0, top: 14.0, right: 14.0, bottom: 3.5, opacity: opacity(for: 2, activeArc: activeArc))
+        drawArch(left: 6.5, top: 11.5, right: 11.5, bottom: 4.5, opacity: opacity(for: 1, activeArc: activeArc))
+
+        let rails = NSBezierPath()
+        rails.move(to: NSPoint(x: 6.5, y: 1.5))
+        rails.line(to: NSPoint(x: 9, y: 4.5))
+        rails.line(to: NSPoint(x: 11.5, y: 1.5))
+        rails.lineWidth = 1.6
+        rails.lineCapStyle = .round
+        rails.lineJoinStyle = .round
+        NSColor.black.setStroke()
+        rails.stroke()
+
+        image.isTemplate = true
+        return image
     }
 
-    private var pathRails: Path {
-        var path = Path()
-        path.move(to: CGPoint(x: 6.5, y: 16.5))
-        path.addLine(to: CGPoint(x: 9, y: 13.5))
-        path.addLine(to: CGPoint(x: 11.5, y: 16.5))
-        return path
-    }
-
-    private func arch(left: CGFloat, top: CGFloat, right: CGFloat, bottom: CGFloat) -> Path {
-        let centerX = (left + right) / 2
-        var path = Path()
-        path.move(to: CGPoint(x: left, y: bottom))
-        path.addCurve(
-            to: CGPoint(x: right, y: bottom),
-            control1: CGPoint(x: left, y: top),
-            control2: CGPoint(x: right, y: top)
+    private static func drawArch(
+        left: CGFloat,
+        top: CGFloat,
+        right: CGFloat,
+        bottom: CGFloat,
+        opacity: CGFloat
+    ) {
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: left, y: bottom))
+        path.curve(
+            to: NSPoint(x: right, y: bottom),
+            controlPoint1: NSPoint(x: left, y: top),
+            controlPoint2: NSPoint(x: right, y: top)
         )
-        path.addLine(to: CGPoint(x: right, y: bottom - 0.5))
-        path.move(to: CGPoint(x: centerX, y: bottom))
-        return path
+        path.lineWidth = 1.6
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+        NSColor.black.withAlphaComponent(opacity).setStroke()
+        path.stroke()
     }
 
-    private func opacity(for arc: Int) -> Double {
+    private static func opacity(for arc: Int, activeArc: Int) -> CGFloat {
         guard activeArc != 0 else { return 1 }
         return activeArc == arc ? 1 : 0.42
     }
