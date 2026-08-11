@@ -17,13 +17,17 @@ struct MerakiOpenConnectApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("Meraki OpenConnect", systemImage: controller.phase.systemImage) {
+        MenuBarExtra {
             MenuContentView(controller: controller)
                 .task {
                     guard !hasStarted else { return }
                     hasStarted = true
                     await controller.start()
                 }
+        }
+        label: {
+            TunnelStatusIcon(phase: controller.phase)
+                .accessibilityLabel(controller.statusLine)
         }
         .menuBarExtraStyle(.menu)
     }
