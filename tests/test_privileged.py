@@ -432,13 +432,23 @@ def test_helper_has_no_profile_controlled_command_surface(tmp_path: Path) -> Non
 def test_helper_verifies_every_fixed_runtime_artifact_before_exec() -> None:
     helper = build_install_plan(PROFILE, SETTINGS, "tony").helper_text
     vpn_connect = helper.split("vpn_connect() {", 1)[1].split("\n}", 1)[0]
+    runtime = helper.split("verify_runtime() {", 1)[1].split("\n}", 1)[0]
+    ensure_runtime = helper.split("ensure_runtime_directory() {", 1)[1].split("\n}", 1)[0]
 
     assert f"VPNC={privileged.VPNC_SCRIPT_PATH}" in helper
     assert f"LIBRARY_DIR={privileged.RUNTIME_LIBRARY_PATH}" in helper
     assert f"POLICY={privileged.POLICY_PATH}" in helper
     assert 'verify_root_file "$POLICY"' in helper
     assert "verify_runtime" in vpn_connect
+    assert "ensure_runtime_directory" in vpn_connect
     assert vpn_connect.index("verify_runtime") < vpn_connect.index('if "$NATIVE"')
+    assert vpn_connect.index("ensure_runtime_directory") < vpn_connect.index("shlock")
+    assert f"[ ! -L {privileged.RUNTIME_PATH} ]" in ensure_runtime
+    assert f"verify_root_directory {privileged.RUNTIME_PATH}" in ensure_runtime
+    assert (
+        f"if [ -e {privileged.RUNTIME_PATH} ] || [ -L {privileged.RUNTIME_PATH} ]; then"
+        in runtime
+    )
     assert "/usr/bin/stat -f '%u'" in helper
     assert "/usr/bin/stat -f '%Lp'" in helper
     assert "/bin/ls -lde" in helper
@@ -446,6 +456,34 @@ def test_helper_verifies_every_fixed_runtime_artifact_before_exec() -> None:
     assert '"$ACL_LINES" -eq 1' in helper
     assert '"$LIBRARY_DIR/"*.dylib' in helper
     assert "/opt/homebrew" not in helper
+
+
+def test_helper_recreates_missing_runtime_directory_and_rejects_symlink(
+    tmp_path: Path,
+) -> None:
+    helper = build_install_plan(PROFILE, SETTINGS, "tony").helper_text
+    runtime = tmp_path / "runtime"
+    ensure = _shell_function(helper, "ensure_runtime_directory")
+    ensure = ensure.replace(privileged.RUNTIME_PATH, str(runtime))
+    ensure = ensure.replace(
+        "/usr/bin/install -d -o root -g wheel -m 0755", "/bin/mkdir -m 0755"
+    ).replace("/bin/chmod -N", "/usr/bin/true")
+    script = (
+        "set -eu\n"
+        'die() { exit 1; }\n'
+        'verify_root_directory() { [ -d "$1" ] && [ ! -L "$1" ]; }\n'
+        f"{ensure}\nensure_runtime_directory\n"
+    )
+
+    created = subprocess.run(["/bin/sh"], input=script, text=True, check=False)
+    assert created.returncode == 0
+    assert runtime.is_dir()
+
+    runtime.rmdir()
+    runtime.symlink_to(tmp_path)
+    rejected = subprocess.run(["/bin/sh"], input=script, text=True, check=False)
+    assert rejected.returncode != 0
+    assert runtime.is_symlink()
 
 
 def test_policy_digest_operation_is_read_only() -> None:
@@ -722,7 +760,7 @@ def test_install_command_streams_one_immutable_payload_to_sudo_stdin(
 
     def runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         commands.append((args, kwargs))
-        if args[0] == "/usr/bin/clang":
+        if args[:4] == ["/usr/bin/xcrun", "--sdk", "macosx", "clang"]:
             Path(args[-1]).write_bytes(b"test-native-binary")
         if args[0] == "/usr/bin/otool":
             target = Path(args[-1])
@@ -757,7 +795,7 @@ def test_install_command_streams_one_immutable_payload_to_sudo_stdin(
         "meraki-openconnect-install-" in argument
         for argument in commands[-1][0]
     )
-    assert commands[0][0][0] == "/usr/bin/clang"
+    assert commands[0][0][:4] == ["/usr/bin/xcrun", "--sdk", "macosx", "clang"]
     assert any(path.endswith("/worker_io.c") for path in commands[0][0])
     assert any(command[0][0] == "/usr/bin/codesign" for command in commands)
     assert any(command[0][-1] == "--smoke" for command in commands)

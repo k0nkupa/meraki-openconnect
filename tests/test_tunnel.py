@@ -174,6 +174,33 @@ def test_dns_setup_exit_code_distinguishes_clean_and_failed_rollback(
     assert caught.value.rollback_complete is rollback_complete
 
 
+@pytest.mark.parametrize(
+    ("stderr", "message"),
+    [
+        (
+            "meraki-openconnect-root: tunnel PID is not the fixed worker\n",
+            "DNS resolver setup failed: tunnel PID is not the fixed worker",
+        ),
+        (
+            "sudo: private resolver target\n",
+            "DNS resolver setup failed",
+        ),
+    ],
+)
+def test_dns_setup_reports_only_fixed_helper_diagnostic(
+    monkeypatch: pytest.MonkeyPatch, stderr: str, message: str
+) -> None:
+    def runner(args: list[str], **_kwargs: object) -> None:
+        raise subprocess.CalledProcessError(1, args, stderr=stderr)
+
+    monkeypatch.setattr("meraki_openconnect.tunnel.subprocess.run", runner)
+
+    with pytest.raises(_DnsSetupError) as caught:
+        _run_privileged_operation("dns-connect")
+
+    assert str(caught.value) == message
+
+
 def test_outdated_privileged_helper_requests_reinstall(
     monkeypatch: pytest.MonkeyPatch,
 ):

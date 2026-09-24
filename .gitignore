@@ -1,5 +1,6 @@
 graphify-out/
 dist/
+.DS_Store
 .venv/
 .worktrees/
 /docs/superpowers/
@@ -10,6 +11,7 @@ __pycache__/
 native/meraki-openconnect-native
 native/tests/test_protocol
 native/tests/test_policy
+native/tests/test_browser_cancel
 macos/MerakiOpenConnect/**/xcuserdata/
 macos/MerakiOpenConnect/.derivedData*/
 profile.json

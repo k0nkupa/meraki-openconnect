@@ -57,8 +57,11 @@ class TunnelError(RuntimeError):
 
 
 class _DnsSetupError(TunnelError):
-    def __init__(self, *, rollback_complete: bool):
-        super().__init__("DNS resolver setup failed")
+    def __init__(self, *, rollback_complete: bool, diagnostic: str | None = None):
+        message = "DNS resolver setup failed"
+        if diagnostic is not None:
+            message += f": {diagnostic}"
+        super().__init__(message)
         self.rollback_complete = rollback_complete
 
 
@@ -302,7 +305,14 @@ def _run_privileged_operation(operation: str) -> None:
         )
     except subprocess.CalledProcessError as exc:
         if operation == "dns-connect":
-            raise _DnsSetupError(rollback_complete=exc.returncode == 1) from exc
+            detail = re.fullmatch(
+                r"meraki-openconnect-root: ([A-Za-z][A-Za-z -]{0,100})\n?",
+                exc.stderr or "",
+            )
+            raise _DnsSetupError(
+                rollback_complete=exc.returncode == 1,
+                diagnostic=detail.group(1) if detail else None,
+            ) from exc
         raise TunnelError("DNS resolver cleanup failed") from exc
     except OSError as exc:
         if operation == "dns-connect":

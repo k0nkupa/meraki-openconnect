@@ -267,7 +267,9 @@ verify_root_directory() {{
 verify_runtime() {{
   verify_root_directory /Library
   verify_root_directory {PRIVILEGED_ROOT}
-  verify_root_directory {RUNTIME_PATH}
+  if [ -e {RUNTIME_PATH} ] || [ -L {RUNTIME_PATH} ]; then
+    verify_root_directory {RUNTIME_PATH}
+  fi
   verify_root_directory "$LIBRARY_DIR"
   verify_root_file "$NATIVE"
   verify_root_file "$VPNC"
@@ -279,6 +281,15 @@ verify_runtime() {{
     verify_root_file "$LIBRARY"
   done
   [ "$FOUND_LIBRARY" -eq 1 ] || die "privileged runtime libraries are missing"
+}}
+
+ensure_runtime_directory() {{
+  [ ! -L {RUNTIME_PATH} ] || die "privileged runtime directory is unsafe"
+  if [ ! -e {RUNTIME_PATH} ]; then
+    /usr/bin/install -d -o root -g wheel -m 0755 {RUNTIME_PATH}
+    /bin/chmod -N {RUNTIME_PATH}
+  fi
+  verify_root_directory {RUNTIME_PATH}
 }}
 
 read_tunnel_pid() {{
@@ -299,6 +310,7 @@ verify_tunnel_worker() {{
 
 vpn_connect() {{
   verify_runtime
+  ensure_runtime_directory
   [ -x "$NATIVE" ] || die "native worker is missing"
   /usr/bin/shlock -f "$INSTALL_LOCK" -p $$ || die "privileged operation is already active"
   trap '/bin/rm -f "$INSTALL_LOCK"' EXIT HUP INT TERM
@@ -769,7 +781,10 @@ def _compile_native_worker(native: Path, output: Path) -> None:
     ):
         raise PrivilegedError("native worker sources are missing or unsafe")
     command = [
-        "/usr/bin/clang",
+        "/usr/bin/xcrun",
+        "--sdk",
+        "macosx",
+        "clang",
         "-std=c11",
         "-Wall",
         "-Wextra",

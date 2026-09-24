@@ -1,4 +1,4 @@
-CC := /usr/bin/clang
+CC := /usr/bin/xcrun --sdk macosx clang
 CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror -I. -I/opt/homebrew/include
 LDFLAGS := -L/opt/homebrew/lib -Wl,-headerpad_max_install_names -lopenconnect -lgnutls
 
