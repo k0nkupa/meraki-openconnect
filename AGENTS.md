@@ -25,3 +25,17 @@ Add or update the closest test for every behavior change. Security-sensitive pat
 ## Commit & Pull Request Guidelines
 
 Recent history uses concise Conventional Commit subjects such as `feat:`, `fix:`, `test:`, `ci:`, and `docs:`. Keep commits focused and imperative. Pull requests should explain scope and security impact, list exact validation run, link relevant issues, and include screenshots for visible menu-app changes. Never place live profiles, private topology, tokens, certificate pins, authentication logs, or generated build state in commits or PRs; report vulnerabilities privately as described in `SECURITY.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as local Markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The canonical triage roles use the default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repository uses a single-context domain-doc layout. See `docs/agents/domain.md`.
