@@ -308,6 +308,14 @@ verify_tunnel_worker() {{
   [ "$COMMAND" = "$NATIVE" ] || die "tunnel PID is not the fixed worker"
 }}
 
+verify_dns_restored() {{
+  [ ! -e {RUNTIME_PATH} ] && [ ! -L {RUNTIME_PATH} ] && return 0
+  verify_root_directory {RUNTIME_PATH}
+  for DNS_STATE in {RUNTIME_PATH}/dns.*; do
+    [ ! -e "$DNS_STATE" ] && [ ! -L "$DNS_STATE" ] || die "DNS restoration is incomplete"
+  done
+}}
+
 vpn_connect() {{
   verify_runtime
   ensure_runtime_directory
@@ -322,11 +330,13 @@ vpn_connect() {{
     fi
     /bin/rm -f "$TUNNEL_PID_PATH"
   fi
+  verify_dns_restored
   if "$NATIVE"; then
     STATUS=0
   else
     STATUS=$?
   fi
+  if (verify_dns_restored); then :; else STATUS=1; fi
   /bin/rm -f "$INSTALL_LOCK"
   trap - EXIT HUP INT TERM
   exit "$STATUS"
@@ -403,6 +413,7 @@ cleanup_dns_resolvers() {{
   [ ! -e /private/etc/resolver ] || verify_root_directory /private/etc/resolver
 {cleanup_calls}
   flush_dns
+  verify_dns_restored
 }}
 
 dns_connect() {{

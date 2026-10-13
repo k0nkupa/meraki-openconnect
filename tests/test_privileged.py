@@ -637,6 +637,94 @@ vpn_disconnect
     )
 
 
+@pytest.mark.parametrize("pending", ["none", "directory", "dangling_symlink"])
+def test_dns_restoration_guard_rejects_pending_recovery(
+    tmp_path: Path, pending: str
+) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    if pending == "directory":
+        (runtime / "dns.1234").mkdir()
+    elif pending == "dangling_symlink":
+        (runtime / "dns.1234").symlink_to(tmp_path / "missing")
+    helper = build_install_plan(PROFILE, SETTINGS, "tony").helper_text
+    guard = _shell_function(helper, "verify_dns_restored").replace(
+        privileged.RUNTIME_PATH, str(runtime)
+    )
+    script = f"""#!/bin/sh
+set -eu
+die() {{ exit 1; }}
+verify_root_directory() {{ :; }}
+{guard}
+verify_dns_restored
+"""
+    result = subprocess.run(["/bin/sh"], input=script, text=True, check=False)
+    assert result.returncode == (0 if pending == "none" else 1)
+
+
+@pytest.mark.parametrize("pending", ["before", "after", "none"])
+def test_connect_rejects_unresolved_dns_before_or_after_worker(
+    tmp_path: Path, pending: str
+) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    if pending == "before":
+        (runtime / "dns.1234").mkdir()
+    marker = tmp_path / "worker-ran"
+    worker = tmp_path / "worker"
+    worker.write_text(
+        f'#!/bin/sh\n: > "{marker}"\n'
+        + (f'/bin/mkdir "{runtime}/dns.1234"\n' if pending == "after" else "")
+    )
+    worker.chmod(0o700)
+    helper = build_install_plan(PROFILE, SETTINGS, "tony").helper_text
+    connect = _shell_function(helper, "vpn_connect")
+    connect = connect.replace("/usr/bin/shlock", "acquire_lock")
+    guard = _shell_function(helper, "verify_dns_restored")
+    script = f"""#!/bin/sh
+set -eu
+NATIVE='{worker}'
+INSTALL_LOCK='{tmp_path / 'operation.lock'}'
+TUNNEL_PID_PATH='{tmp_path / 'tunnel.pid'}'
+die() {{ exit 1; }}
+verify_root_directory() {{ :; }}
+verify_runtime() {{ :; }}
+ensure_runtime_directory() {{ :; }}
+acquire_lock() {{ :; }}
+{guard}
+{connect}
+vpn_connect
+""".replace(privileged.RUNTIME_PATH, str(runtime))
+    result = subprocess.run(["/bin/sh"], input=script, text=True, check=False)
+    assert result.returncode == (0 if pending == "none" else 1)
+    assert marker.exists() == (pending != "before")
+
+
+def test_disconnect_reports_pending_dns_after_stopping_worker(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    recovery = runtime / "dns.1234"
+    recovery.mkdir()
+    stopped = tmp_path / "worker-stopped"
+    helper = build_install_plan(PROFILE, SETTINGS, "tony").helper_text
+    guard = _shell_function(helper, "verify_dns_restored")
+    disconnect = _shell_function(helper, "vpn_disconnect")
+    script = f"""#!/bin/sh
+set -eu
+die() {{ exit 1; }}
+verify_root_directory() {{ :; }}
+stop_vpn_worker() {{ : > '{stopped}'; }}
+cleanup_dns_resolvers() {{ verify_dns_restored; }}
+{guard}
+{disconnect}
+vpn_disconnect
+""".replace(privileged.RUNTIME_PATH, str(runtime))
+    result = subprocess.run(["/bin/sh"], input=script, text=True, check=False)
+    assert result.returncode == 1
+    assert stopped.exists()
+    assert recovery.exists()
+
+
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS filesystem contract")
 def test_helper_accepts_the_canonical_macos_etc_symlink() -> None:
     assert os.path.islink("/etc")
