@@ -164,26 +164,24 @@ their Microsoft Entra VPN login:
 3. Select **Load unpacked** and choose this checkout's `chrome-extension`
    directory.
 4. Copy the 32-character extension ID shown by Chrome.
-5. Identify the Chrome profile directory, such as `Profile 1`, from
-   `chrome://version` under **Profile Path**.
 
 The extension begins without gateway access. The setup flow will ask the user
 to approve access to the one exact HTTPS gateway in the validated profile.
-Validate only the format of the supplied extension ID and profile-directory
-name; never guess either value.
+Validate the supplied extension ID; never guess it. Chrome chooses its profile
+through normal macOS opening behavior. The profile used must have the extension
+loaded and gateway permission granted; do not request a profile directory.
 
 ## 6. Run interactive setup
 
-Show the complete command with the user's candidate path, extension ID, and
-Chrome profile directory. Run it only in a visible interactive terminal that
+Show the complete command with the user's candidate path and extension ID.
+Run it only in a visible interactive terminal that
 can open Chrome and present administrator authorization. If the agent terminal
 cannot do that, give the command to the user and wait for its result.
 
 ```bash
 meraki-openconnect setup \
   "$HOME/.config/meraki-openconnect/profile-candidate.json" \
-  --extension-id "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
-  --chrome-profile-directory "Profile 1"
+  --extension-id "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 ```
 
 Replace only the two example arguments with the values the user confirmed.

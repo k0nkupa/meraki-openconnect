@@ -28,7 +28,6 @@ def _configured(tmp_path: Path) -> tuple[Path, SettingsStore]:
     store.save(
         MachineSettings(
             schema_version=1,
-            chrome_profile_directory="Profile 1",
             extension_id="a" * 32,
             extension_gateway_origin="https://vpn.example.com",
             extension_profile_digest=PROFILE.profile_digest(),
@@ -45,8 +44,7 @@ def test_complete_doctor_contract_is_read_only_and_ready(tmp_path: Path) -> None
     dependencies = ReadinessDependencies(
         openconnect_available=lambda: events.append("openconnect") or True,
         openconnect_saml_available=lambda: events.append("saml") or True,
-        chrome_status=lambda directory: events.append(f"chrome:{directory}")
-        or (True, True),
+        chrome_status=lambda: events.append("chrome") or True,
         native_host_configured=lambda extension_id: events.append("native-host")
         or True,
         privileged_component_installed=lambda path: events.append(f"component:{path}")
@@ -70,6 +68,10 @@ def test_complete_doctor_contract_is_read_only_and_ready(tmp_path: Path) -> None
 
     assert set(readiness.report) == EXPECTED_DOCTOR_KEYS
     assert readiness.ready is True
+    legacy_report = {**readiness.report, "chrome_profile_available": False}
+    assert Readiness(legacy_report).ready is True
+    del legacy_report["chrome_profile_available"]
+    assert Readiness(legacy_report).ready is True
     assert readiness.report["extension_permission_granted"] is True
     assert readiness.report["policy_digest_matches"] is True
     assert readiness.report["connected"] is False
@@ -79,7 +81,7 @@ def test_complete_doctor_contract_is_read_only_and_ready(tmp_path: Path) -> None
     assert events == [
         "openconnect",
         "saml",
-        "chrome:Profile 1",
+        "chrome",
         "native-host",
         f"component:{HELPER_PATH}",
         f"component:{NATIVE_PATH}",
@@ -100,7 +102,7 @@ def test_receipt_and_policy_mismatches_are_separate(tmp_path: Path) -> None:
     dependencies = ReadinessDependencies(
         openconnect_available=lambda: True,
         openconnect_saml_available=lambda: True,
-        chrome_status=lambda directory: (True, True),
+        chrome_status=lambda: True,
         native_host_configured=lambda extension_id: True,
         privileged_component_installed=lambda path: True,
         installed_policy_digest=lambda: "sha256:" + "9" * 64,
@@ -123,7 +125,7 @@ def test_missing_profile_and_settings_return_stable_false_report(tmp_path: Path)
     dependencies = ReadinessDependencies(
         openconnect_available=lambda: False,
         openconnect_saml_available=lambda: False,
-        chrome_status=lambda directory: (True, False),
+        chrome_status=lambda: True,
         native_host_configured=lambda extension_id: False,
         privileged_component_installed=lambda path: False,
         installed_policy_digest=lambda: None,

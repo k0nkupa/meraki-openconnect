@@ -10,7 +10,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from meraki_openconnect.chrome import (
     build_extension_setup_url,
-    open_in_chrome_profile,
+    open_in_chrome,
 )
 from meraki_openconnect.extension_setup import (
     ExtensionPermissionReceipt,
@@ -79,9 +79,8 @@ def _default_grant_extension_origin(
         gateway_origin=f"https://{profile.gateway.host}",
         profile_digest=profile.profile_digest(),
     ) as callback:
-        open_in_chrome_profile(
+        open_in_chrome(
             build_extension_setup_url(browser.extension_id),
-            browser.chrome_profile_directory,
         )
         return callback.wait()
 
@@ -287,7 +286,6 @@ def run_setup(
     settings = validate_machine_settings(
         MachineSettings(
             schema_version=1,
-            chrome_profile_directory=browser.chrome_profile_directory,
             extension_id=browser.extension_id,
             extension_gateway_origin=receipt.gateway_origin,
             extension_profile_digest=receipt.profile_digest,

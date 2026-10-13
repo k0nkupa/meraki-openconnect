@@ -200,7 +200,10 @@ class TokenCallback:
 
     def wait(self) -> str:
         if not self._token_ready.wait(self._timeout_seconds):
-            raise CallbackTimeout("Chrome did not return a VPN token before timeout")
+            raise CallbackTimeout(
+                "Chrome did not return a VPN token before timeout; check that the "
+                "Chrome window used for login has the VPN extension and gateway permission"
+            )
         if self._error is not None:
             raise self._error
         if self._token is None:

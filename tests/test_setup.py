@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import meraki_openconnect.setup as setup_module
 
 from meraki_openconnect.extension_setup import ExtensionPermissionReceipt
 from meraki_openconnect.profile import OrganizationProfile
@@ -30,7 +31,7 @@ from meraki_openconnect.setup import (
 PROFILE = OrganizationProfile.load(
     Path(__file__).parents[1] / "examples" / "profile.example.json"
 )
-BROWSER = BrowserSettings("Profile 1", "a" * 32)
+BROWSER = BrowserSettings("a" * 32)
 PIN = "pin-sha256:" + "A" * 43 + "="
 OLD_PIN = "pin-sha256:" + "B" * 42 + "A="
 POLICY_DIGEST = "sha256:" + "2" * 64
@@ -72,6 +73,32 @@ def _dependencies(events: list[str]) -> SetupDependencies:
             "connected": False,
         },
     )
+
+
+def test_permission_setup_opens_chrome_without_a_profile(monkeypatch, tmp_path: Path) -> None:
+    launched = []
+
+    class Callback:
+        def __init__(self, *, gateway_origin, profile_digest):
+            self.receipt = ExtensionPermissionReceipt(gateway_origin, profile_digest, True)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def wait(self):
+            return self.receipt
+
+    monkeypatch.setattr(setup_module, "ExtensionSetupCallback", Callback)
+    monkeypatch.setattr(setup_module, "open_in_chrome", lambda url: launched.append(url))
+    dependencies = _dependencies([])
+    dependencies.grant_extension_origin = setup_module._default_grant_extension_origin
+    result = run_setup(tmp_path / "candidate.json", BROWSER, confirm=lambda _summary: True,
+                       dependencies=dependencies)
+    assert result.settings.extension_id == BROWSER.extension_id
+    assert launched == [f"chrome-extension://{BROWSER.extension_id}/setup.html"]
 
 
 def test_setup_success_has_explicit_order_and_final_receipts(tmp_path: Path) -> None:
@@ -168,7 +195,6 @@ def test_existing_pin_change_requires_separate_approval_before_browser_auth(
     dependencies = _dependencies(events)
     dependencies.load_existing_settings = lambda: MachineSettings(
         schema_version=1,
-        chrome_profile_directory="Profile 1",
         extension_id="a" * 32,
         extension_gateway_origin="https://vpn.example.com",
         extension_profile_digest=PROFILE.profile_digest(),

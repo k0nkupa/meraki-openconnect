@@ -23,7 +23,6 @@ def test_agent_setup_instructions_cover_commands_and_safety_boundaries() -> None
         "chrome://extensions",
         "meraki-openconnect setup",
         '--extension-id "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
-        '--chrome-profile-directory "Profile 1"',
         "meraki-openconnect doctor --json",
         "Do not connect the VPN automatically",
         "Cisco Secure Client XML is not a complete organization profile",
@@ -39,6 +38,7 @@ def test_agent_setup_instructions_do_not_recommend_unsafe_shortcuts() -> None:
     text = INSTRUCTIONS.read_text()
 
     forbidden_fragments = (
+        "--chrome-profile-directory",
         "curl | sh",
         "curl -k",
         "--no-check-certificate",

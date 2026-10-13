@@ -56,7 +56,7 @@ def test_setup_receipt_matches_candidate_policy(tmp_path: Path) -> None:
     ) as callback:
         expected = _exchange(callback.socket_path)
         receipt = callback.wait()
-        with pytest.raises(ExtensionSetupTimeout):
+        with pytest.raises(ExtensionSetupTimeout, match="Chrome window opened for setup has the VPN extension"):
             callback.wait()
         state_path = tmp_path / ACTIVE_SETUP_FILE
         assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o700

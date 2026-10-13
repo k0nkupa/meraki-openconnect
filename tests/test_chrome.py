@@ -7,98 +7,68 @@ from meraki_openconnect.chrome import (
     build_extension_start_url,
     build_extension_setup_url,
     chrome_installation_status,
-    open_in_chrome_profile,
-    open_in_moc_profile,
+    open_in_chrome,
 )
 
 
-def test_chrome_installation_status_requires_binary_and_profile(tmp_path):
+def test_chrome_installation_status_requires_only_an_executable(tmp_path):
     binary = tmp_path / "Google Chrome"
-    profile = tmp_path / "Profile 1"
+    assert chrome_installation_status(binary=binary) is False
     binary.write_text("")
+    binary.chmod(0o600)
+    assert chrome_installation_status(binary=binary) is False
     binary.chmod(0o700)
-    profile.mkdir()
-
-    assert chrome_installation_status(binary=binary, profile=profile) == (True, True)
-    profile.rmdir()
-    assert chrome_installation_status(binary=binary, profile=profile) == (True, False)
+    assert chrome_installation_status(binary=binary) is True
 
 
-def test_builds_extension_url_without_callback_capability():
-    url = build_extension_start_url("abcdefghijklmnopabcdefghijklmnop")
-
-    assert url == "chrome-extension://abcdefghijklmnopabcdefghijklmnop/start.html"
-    assert "127.0.0.1" not in url
-    assert "nonce" not in url
-    assert build_extension_setup_url(
-        "abcdefghijklmnopabcdefghijklmnop"
-    ) == "chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html"
+def test_builds_extension_urls_without_callback_capability():
+    extension_id = "abcdefghijklmnopabcdefghijklmnop"
+    assert build_extension_start_url(extension_id) == f"chrome-extension://{extension_id}/start.html"
+    assert build_extension_setup_url(extension_id) == f"chrome-extension://{extension_id}/setup.html"
 
 
-@pytest.mark.parametrize(
-    "extension_id",
-    ["wrong", "A" * 32, "abcdefghijklmnopabcdefghijklmnopx"],
-)
+@pytest.mark.parametrize("extension_id", ["wrong", "A" * 32, "abcdefghijklmnopabcdefghijklmnopx"])
 def test_rejects_invalid_extension_id(extension_id: str):
     with pytest.raises(ChromeLaunchError):
         build_extension_start_url(extension_id)
 
 
-def test_opens_only_profile_1_without_a_shell():
-    calls: list[tuple[list[str], dict[str, object]]] = []
+@pytest.mark.parametrize("page", ["start.html", "setup.html"])
+def test_opens_extension_page_through_macos_without_profile_or_browser_exit_wait(page):
+    calls = []
 
-    def runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+    def runner(args, **kwargs):
         calls.append((args, kwargs))
         return subprocess.CompletedProcess(args, 0)
 
-    open_in_moc_profile("chrome-extension://abcdefghijklmnopabcdefghijklmnop/start.html", runner)
-
+    url = f"chrome-extension://abcdefghijklmnopabcdefghijklmnop/{page}"
+    open_in_chrome(url, runner)
     assert calls == [
-        (
-            [
-                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                "--profile-directory=Profile 1",
-                "chrome-extension://abcdefghijklmnopabcdefghijklmnop/start.html",
-            ],
-            {"check": True},
-        )
+        (["/usr/bin/open", "-a", "/Applications/Google Chrome.app", url],
+         {"check": True, "timeout": 10})
     ]
 
 
-def test_opens_configured_extension_page_in_validated_profile_without_shell():
-    calls: list[tuple[list[str], dict[str, object]]] = []
-
-    def runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        calls.append((args, kwargs))
-        return subprocess.CompletedProcess(args, 0)
-
-    open_in_chrome_profile(
-        "chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html",
-        "Work Profile",
-        runner,
-    )
-
-    assert calls == [
-        (
-            [
-                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                "--profile-directory=Work Profile",
-                "chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html",
-            ],
-            {"check": True},
-        )
-    ]
-
-
-@pytest.mark.parametrize(
-    ("url", "profile"),
-    [
-        ("https://vpn.example.com", "Profile 1"),
-        ("chrome-extension://abcdefghijklmnopabcdefghijklmnop/other.html", "Profile 1"),
-        ("chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html?x=1", "Profile 1"),
-        ("chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html", "../Default"),
-    ],
-)
-def test_profile_driven_launcher_rejects_unsafe_input(url: str, profile: str) -> None:
+@pytest.mark.parametrize("url", [
+    "https://vpn.example.com",
+    "chrome-extension://abcdefghijklmnopabcdefghijklmnop/other.html",
+    "chrome-extension://abcdefghijklmnopabcdefghijklmnop/setup.html?x=1",
+    "chrome-extension://user@abcdefghijklmnopabcdefghijklmnop/start.html",
+])
+def test_launcher_rejects_unsafe_urls(url: str):
+    calls = []
     with pytest.raises(ChromeLaunchError):
-        open_in_chrome_profile(url, profile)
+        open_in_chrome(url, lambda *args, **kwargs: calls.append(args))
+    assert calls == []
+
+
+@pytest.mark.parametrize("failure", [
+    OSError("private path"), subprocess.CalledProcessError(1, ["open"]),
+    subprocess.TimeoutExpired(["open"], 10),
+])
+def test_launch_failure_has_browser_guidance_without_private_details(failure):
+    def runner(*args, **kwargs):
+        raise failure
+
+    with pytest.raises(ChromeLaunchError, match="Google Chrome could not be opened"):
+        open_in_chrome(build_extension_start_url("a" * 32), runner)

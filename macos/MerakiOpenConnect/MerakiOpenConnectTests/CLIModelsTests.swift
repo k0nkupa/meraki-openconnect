@@ -22,7 +22,6 @@ final class CLIModelsTests: XCTestCase {
             (try decode(openconnect: false), "OpenConnect is not installed.", "brew install openconnect"),
             (try decode(openconnectSaml: false), "The Meraki OpenConnect Python environment is incomplete.", nil),
             (try decode(chromeAvailable: false), "Google Chrome is not installed in the expected location.", nil),
-            (try decode(chromeProfileAvailable: false), "The configured Chrome profile is not available.", nil),
             (try decode(profileConfigured: false), "No organization profile is configured.", nil),
             (try decode(settingsConfigured: false), "Machine settings are not configured.", nil),
             (try decode(extensionConfigured: false), "The Chrome extension or native host is not configured.", nil),
@@ -37,6 +36,12 @@ final class CLIModelsTests: XCTestCase {
         for (report, message, command) in cases {
             XCTAssertEqual(report.setupIssue, SetupIssue(message: message, command: command))
         }
+    }
+
+    func testLegacyChromeProfileReadinessDoesNotBlockSetup() throws {
+        let report = try decode(legacyChromeProfileAvailable: false)
+        XCTAssertEqual(report, try decode())
+        XCTAssertNil(report.setupIssue)
     }
 
     func testMultipleFailuresReturnOnlyHighestPriorityIssue() throws {
@@ -90,7 +95,7 @@ final class CLIModelsTests: XCTestCase {
         openconnect: Bool = true,
         openconnectSaml: Bool = true,
         chromeAvailable: Bool = true,
-        chromeProfileAvailable: Bool = true,
+        legacyChromeProfileAvailable: Bool? = nil,
         profileConfigured: Bool = true,
         settingsConfigured: Bool = true,
         extensionConfigured: Bool = true,
@@ -102,13 +107,16 @@ final class CLIModelsTests: XCTestCase {
         policyDigestMatches: Bool = true,
         ciscoConnected: Bool = false
     ) throws -> DoctorReport {
+        let legacyProfileField = legacyChromeProfileAvailable.map {
+            "\"chrome_profile_available\": \($0),"
+        } ?? ""
         let data = Data(
             """
             {
               "openconnect": \(openconnect),
               "openconnect_saml": \(openconnectSaml),
               "chrome_available": \(chromeAvailable),
-              "chrome_profile_available": \(chromeProfileAvailable),
+              \(legacyProfileField)
               "profile_configured": \(profileConfigured),
               "settings_configured": \(settingsConfigured),
               "extension_configured": \(extensionConfigured),

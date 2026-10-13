@@ -80,7 +80,7 @@ def test_expected_pin_mismatch_stops_before_authenticator_creation(monkeypatch):
         asyncio.run(
             authenticate(
                 PROFILE,
-                BrowserSettings("Profile 1", "a" * 32),
+                BrowserSettings("a" * 32),
                 expected_server_cert_pin="pin-sha256:expected",
             )
         )
@@ -122,8 +122,8 @@ def test_browser_token_is_rejected_if_gateway_spki_changes_during_authentication
 
     monkeypatch.setattr("meraki_openconnect.service.TokenCallback", Callback)
     monkeypatch.setattr(
-        "meraki_openconnect.service.open_in_chrome_profile",
-        lambda *_args: events.append("chrome"),
+        "meraki_openconnect.service.open_in_chrome",
+        lambda _url: events.append("chrome"),
     )
 
     def build_authenticator(
@@ -163,7 +163,7 @@ def test_browser_token_is_rejected_if_gateway_spki_changes_during_authentication
         asyncio.run(
             authenticate(
                 PROFILE,
-                BrowserSettings("Profile 1", "a" * 32),
+                BrowserSettings("a" * 32),
                 expected_server_cert_pin=expected_pin,
             )
         )

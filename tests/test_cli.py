@@ -39,7 +39,6 @@ PROFILE = OrganizationProfile.load(
 PIN = "pin-sha256:" + "A" * 43 + "="
 SETTINGS = MachineSettings(
     schema_version=1,
-    chrome_profile_directory="Profile 1",
     extension_id="a" * 32,
     extension_gateway_origin="https://vpn.example.com",
     extension_profile_digest=PROFILE.profile_digest(),
@@ -102,11 +101,9 @@ def test_setup_command_uses_exact_browser_options_and_prints_digest_after_succes
             str(candidate),
             "--extension-id",
             "a" * 32,
-            "--chrome-profile-directory",
-            "Profile 1",
         ]
     ) == 0
-    assert calls == [(candidate, BrowserSettings("Profile 1", "a" * 32))]
+    assert calls == [(candidate, BrowserSettings("a" * 32))]
     output = capsys.readouterr().out
     assert "safe summary" in output
     assert SETTINGS.installed_policy_digest in output
@@ -130,8 +127,6 @@ def test_setup_failure_returns_operational_error_without_success_digest(
             str(candidate),
             "--extension-id",
             "a" * 32,
-            "--chrome-profile-directory",
-            "Profile 1",
         ]
     ) == 3
     captured = capsys.readouterr()
@@ -157,8 +152,6 @@ def test_setup_tls_probe_failure_is_reported_without_traceback(
             str(candidate),
             "--extension-id",
             "a" * 32,
-            "--chrome-profile-directory",
-            "Profile 1",
         ]
     ) == 3
     captured = capsys.readouterr()

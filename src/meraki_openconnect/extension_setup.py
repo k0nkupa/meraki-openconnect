@@ -277,7 +277,8 @@ class ExtensionSetupCallback:
     def wait(self) -> ExtensionPermissionReceipt:
         if not self._result_ready.wait(self._timeout_seconds):
             raise ExtensionSetupTimeout(
-                "Chrome did not return extension permission before timeout"
+                "Chrome did not return extension permission before timeout; check that "
+                "the Chrome window opened for setup has the VPN extension"
             )
         if self._error is not None:
             raise self._error

@@ -22,7 +22,6 @@ VALID_SPKI_PIN = "pin-sha256:" + "A" * 43 + "="
 
 VALID_SETTINGS = MachineSettings(
     schema_version=1,
-    chrome_profile_directory="Profile 1",
     extension_id="a" * 32,
     extension_gateway_origin="https://vpn.example.com",
     extension_profile_digest="sha256:" + "2" * 64,
@@ -41,11 +40,11 @@ def test_settings_store_round_trips_with_private_permissions(tmp_path: Path) -> 
     assert stat.S_IMODE(store.path.stat().st_mode) == 0o600
     assert store.path.name == "settings.json"
     assert not store.path.with_suffix(".tmp").exists()
+    assert "chrome_profile_directory" not in json.loads(store.path.read_text())
 
 
 def test_machine_settings_expose_only_browser_binding() -> None:
     assert VALID_SETTINGS.browser_settings == BrowserSettings(
-        chrome_profile_directory="Profile 1",
         extension_id="a" * 32,
     )
 
@@ -92,16 +91,20 @@ def test_rejects_invalid_server_certificate_pins_without_echoing(raw: str) -> No
 
 
 @pytest.mark.parametrize(
-    "chrome_name",
-    ["", ".", "..", "Profile/1", "Profile\\1", "/Profile 1", "Profile\n1"],
+    "legacy_profile",
+    ["Profile 1", "../Default", "", None],
 )
-def test_rejects_unsafe_chrome_profile_directory(
-    tmp_path: Path, chrome_name: str
+def test_legacy_chrome_profile_is_ignored_and_removed_on_save(
+    tmp_path: Path, legacy_profile: object
 ) -> None:
-    with pytest.raises(SettingsError):
-        SettingsStore(tmp_path).save(
-            replace(VALID_SETTINGS, chrome_profile_directory=chrome_name)
-        )
+    payload = _payload()
+    payload["chrome_profile_directory"] = legacy_profile
+    _write_raw(tmp_path, payload)
+    store = SettingsStore(tmp_path)
+    loaded = store.load()
+    assert loaded == VALID_SETTINGS
+    store.save(loaded)
+    assert "chrome_profile_directory" not in json.loads(store.path.read_text())
 
 
 @pytest.mark.parametrize(
@@ -237,7 +240,6 @@ def test_failed_atomic_replace_preserves_previous_settings(
 def _payload() -> dict[str, Any]:
     return {
         "schema_version": VALID_SETTINGS.schema_version,
-        "chrome_profile_directory": VALID_SETTINGS.chrome_profile_directory,
         "extension_id": VALID_SETTINGS.extension_id,
         "extension_gateway_origin": VALID_SETTINGS.extension_gateway_origin,
         "extension_profile_digest": VALID_SETTINGS.extension_profile_digest,

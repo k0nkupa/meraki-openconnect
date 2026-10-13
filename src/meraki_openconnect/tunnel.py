@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 from meraki_openconnect.callback import TokenCallback
 from meraki_openconnect.chrome import (
     build_extension_start_url,
-    open_in_chrome_profile,
+    open_in_chrome,
 )
 from meraki_openconnect.pin import gateway_tls_pin
 from meraki_openconnect.health import HealthCheckResult, run_health_checks
@@ -391,7 +391,7 @@ def _browser_token(
     }
     with TokenCallback(bootstrap) as callback:
         start_url = build_extension_start_url(browser.extension_id)
-        open_in_chrome_profile(start_url, browser.chrome_profile_directory)
+        open_in_chrome(start_url)
         return callback.wait()
 
 

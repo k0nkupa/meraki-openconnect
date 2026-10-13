@@ -31,7 +31,7 @@ The detailed instructions will tell the agent to:
 5. Help the user create a private organization profile outside the checkout,
    using values supplied by the user or their VPN administrator.
 6. Validate the profile, guide the user through loading the unpacked Chrome
-   extension, and collect the extension ID and Chrome profile directory.
+   extension, and collect the extension ID. Let Chrome choose its profile.
 7. Run the documented setup command from a visible terminal.
 8. Run secret-free diagnostics and report the exact final readiness state.
 9. Optionally guide the user through building the local menu-bar application

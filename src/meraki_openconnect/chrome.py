@@ -1,4 +1,4 @@
-"""Launch the configured Chrome profile without automation debugging."""
+"""Open extension pages through Chrome's normal macOS launch behavior."""
 
 from __future__ import annotations
 
@@ -9,23 +9,8 @@ from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from meraki_openconnect.settings import (
-    SettingsError,
-    validate_chrome_profile_directory,
-)
-
-
 _EXTENSION_ID = re.compile(r"[a-p]{32}\Z")
 CHROME_BINARY = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
-CHROME_PROFILE = (
-    Path.home()
-    / "Library"
-    / "Application Support"
-    / "Google"
-    / "Chrome"
-    / "Profile 1"
-)
-CHROME_USER_DATA = CHROME_PROFILE.parent
 
 
 class ChromeLaunchError(ValueError):
@@ -35,21 +20,9 @@ class ChromeLaunchError(ValueError):
 def chrome_installation_status(
     *,
     binary: Path = CHROME_BINARY,
-    profile: Path | None = None,
-    profile_directory: str | None = None,
-) -> tuple[bool, bool]:
-    """Report whether Chrome and the configured profile directory exist."""
-    if profile is None:
-        if profile_directory is None:
-            profile = CHROME_PROFILE
-        else:
-            try:
-                name = validate_chrome_profile_directory(profile_directory)
-            except SettingsError:
-                return binary.is_file() and os.access(binary, os.X_OK), False
-            profile = CHROME_USER_DATA / name
-    chrome_available = binary.is_file() and os.access(binary, os.X_OK)
-    return chrome_available, chrome_available and profile.is_dir()
+) -> bool:
+    """Report whether Chrome is installed and executable."""
+    return binary.is_file() and os.access(binary, os.X_OK)
 
 
 def build_extension_start_url(extension_id: str) -> str:
@@ -64,15 +37,10 @@ def build_extension_setup_url(extension_id: str) -> str:
     return f"chrome-extension://{extension_id}/setup.html"
 
 
-def open_in_chrome_profile(
+def open_in_chrome(
     url: str,
-    profile_directory: str,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
 ) -> None:
-    try:
-        profile = validate_chrome_profile_directory(profile_directory)
-    except SettingsError as exc:
-        raise ChromeLaunchError("Chrome profile directory is invalid") from exc
     parsed = urlsplit(url)
     if (
         parsed.scheme != "chrome-extension"
@@ -84,18 +52,11 @@ def open_in_chrome_profile(
         or parsed.password is not None
     ):
         raise ChromeLaunchError("only a configured extension page may be opened")
-    runner(
-        [
-            str(CHROME_BINARY),
-            f"--profile-directory={profile}",
-            url,
-        ],
-        check=True,
-    )
-
-
-def open_in_moc_profile(
-    url: str,
-    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
-) -> None:
-    open_in_chrome_profile(url, "Profile 1", runner)
+    try:
+        runner(
+            ["/usr/bin/open", "-a", "/Applications/Google Chrome.app", url],
+            check=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ChromeLaunchError("Google Chrome could not be opened") from exc

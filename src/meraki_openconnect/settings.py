@@ -32,7 +32,6 @@ _SECRET_LIKE = (
 _SETTINGS_KEYS = frozenset(
     {
         "schema_version",
-        "chrome_profile_directory",
         "extension_id",
         "extension_gateway_origin",
         "extension_profile_digest",
@@ -48,14 +47,12 @@ class SettingsError(ValueError):
 
 @dataclass(frozen=True)
 class BrowserSettings:
-    chrome_profile_directory: str
     extension_id: str
 
 
 @dataclass(frozen=True)
 class MachineSettings:
     schema_version: Literal[1]
-    chrome_profile_directory: str
     extension_id: str
     extension_gateway_origin: str
     extension_profile_digest: str
@@ -65,17 +62,13 @@ class MachineSettings:
     @property
     def browser_settings(self) -> BrowserSettings:
         return BrowserSettings(
-            chrome_profile_directory=self.chrome_profile_directory,
             extension_id=self.extension_id,
         )
 
 
 def validate_browser_settings(settings: BrowserSettings) -> BrowserSettings:
-    """Return normalized browser settings safe for direct Chrome invocation."""
+    """Return normalized browser settings for the configured extension."""
     return BrowserSettings(
-        chrome_profile_directory=_chrome_profile_directory(
-            settings.chrome_profile_directory
-        ),
         extension_id=_extension_id(settings.extension_id),
     )
 
@@ -86,18 +79,6 @@ def _string(value: Any) -> str:
     if any(unicodedata.category(character) == "Cc" for character in value):
         raise SettingsError("settings contain an invalid string")
     return value
-
-
-def _chrome_profile_directory(value: Any) -> str:
-    name = _string(value)
-    if name in {".", ".."} or "/" in name or "\\" in name or len(name) > 128:
-        raise SettingsError("settings contain an invalid Chrome profile directory")
-    return name
-
-
-def validate_chrome_profile_directory(value: Any) -> str:
-    """Validate a Chrome directory name below the standard user-data directory."""
-    return _chrome_profile_directory(value)
 
 
 def _extension_id(value: Any) -> str:
@@ -180,10 +161,10 @@ def normalize_server_cert_pin(server_cert_pin: str) -> str:
 
 def _require_keys(payload: dict[str, Any]) -> None:
     keys = set(payload)
-    unknown = keys - _SETTINGS_KEYS
+    unknown = keys - _SETTINGS_KEYS - {"chrome_profile_directory"}
     if any(any(fragment in key.lower() for fragment in _SECRET_LIKE) for key in unknown):
         raise SettingsError("settings contain a forbidden secret-like field")
-    if unknown or keys != _SETTINGS_KEYS:
+    if unknown or not _SETTINGS_KEYS <= keys:
         raise SettingsError("settings contain an unknown or missing field")
 
 
@@ -192,9 +173,6 @@ def _validated(settings: MachineSettings) -> MachineSettings:
         raise SettingsError("settings contain an unsupported schema version")
     return MachineSettings(
         schema_version=1,
-        chrome_profile_directory=_chrome_profile_directory(
-            settings.chrome_profile_directory
-        ),
         extension_id=_extension_id(settings.extension_id),
         extension_gateway_origin=_gateway_origin(settings.extension_gateway_origin),
         extension_profile_digest=_digest(settings.extension_profile_digest),
@@ -215,7 +193,6 @@ def _from_payload(value: Any) -> MachineSettings:
     return _validated(
         MachineSettings(
             schema_version=value["schema_version"],
-            chrome_profile_directory=value["chrome_profile_directory"],
             extension_id=value["extension_id"],
             extension_gateway_origin=value["extension_gateway_origin"],
             extension_profile_digest=value["extension_profile_digest"],
@@ -228,7 +205,6 @@ def _from_payload(value: Any) -> MachineSettings:
 def _payload(settings: MachineSettings) -> dict[str, Any]:
     return {
         "schema_version": settings.schema_version,
-        "chrome_profile_directory": settings.chrome_profile_directory,
         "extension_id": settings.extension_id,
         "extension_gateway_origin": settings.extension_gateway_origin,
         "extension_profile_digest": settings.extension_profile_digest,

@@ -9,7 +9,6 @@ struct DoctorReport: Decodable, Equatable, Sendable {
     let openconnect: Bool
     let openconnectSaml: Bool
     let chromeAvailable: Bool
-    let chromeProfileAvailable: Bool
     let profileConfigured: Bool
     let settingsConfigured: Bool
     let extensionConfigured: Bool
@@ -29,7 +28,6 @@ struct DoctorReport: Decodable, Equatable, Sendable {
         case openconnect
         case openconnectSaml = "openconnect_saml"
         case chromeAvailable = "chrome_available"
-        case chromeProfileAvailable = "chrome_profile_available"
         case profileConfigured = "profile_configured"
         case settingsConfigured = "settings_configured"
         case extensionConfigured = "extension_configured"
@@ -62,12 +60,6 @@ struct DoctorReport: Decodable, Equatable, Sendable {
         if !chromeAvailable {
             return SetupIssue(
                 message: "Google Chrome is not installed in the expected location.",
-                command: nil
-            )
-        }
-        if !chromeProfileAvailable {
-            return SetupIssue(
-                message: "The configured Chrome profile is not available.",
                 command: nil
             )
         }

@@ -32,7 +32,6 @@ PROFILE = OrganizationProfile.load(
 )
 SETTINGS = MachineSettings(
     schema_version=1,
-    chrome_profile_directory="Profile 1",
     extension_id="a" * 32,
     extension_gateway_origin="https://vpn.example.com",
     extension_profile_digest=PROFILE.profile_digest(),

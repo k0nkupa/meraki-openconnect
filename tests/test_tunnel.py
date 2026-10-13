@@ -54,7 +54,6 @@ PROFILE = OrganizationProfile.load(
 PIN = "pin-sha256:" + "A" * 43 + "="
 SETTINGS = MachineSettings(
     schema_version=1,
-    chrome_profile_directory="Profile 1",
     extension_id="a" * 32,
     extension_gateway_origin="https://vpn.example.com",
     extension_profile_digest=PROFILE.profile_digest(),
@@ -78,7 +77,7 @@ def ready_runtime(monkeypatch: pytest.MonkeyPatch):
     )
 
 
-def test_browser_token_binds_profile_receipt_and_configured_chrome_profile(
+def test_browser_token_binds_profile_receipt_without_selecting_chrome_profile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, object] = {}
@@ -98,8 +97,8 @@ def test_browser_token_binds_profile_receipt_and_configured_chrome_profile(
 
     monkeypatch.setattr("meraki_openconnect.tunnel.TokenCallback", Callback)
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.open_in_chrome_profile",
-        lambda url, profile: captured.update(url=url, profile=profile),
+        "meraki_openconnect.tunnel.open_in_chrome",
+        lambda url: captured.update(url=url),
     )
 
     assert _browser_token(
@@ -111,7 +110,7 @@ def test_browser_token_binds_profile_receipt_and_configured_chrome_profile(
     assert isinstance(bootstrap, dict)
     assert bootstrap["gatewayOrigin"] == f"https://{GATEWAY}"
     assert bootstrap["profileDigest"] == PROFILE.profile_digest()
-    assert captured["profile"] == SETTINGS.chrome_profile_directory
+    assert captured["url"] == f"chrome-extension://{SETTINGS.extension_id}/start.html"
 
 
 def test_python_frame_round_trip_matches_native_shape():

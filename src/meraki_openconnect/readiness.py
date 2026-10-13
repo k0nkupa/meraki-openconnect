@@ -54,7 +54,6 @@ _REQUIRED = (
     "openconnect",
     "openconnect_saml",
     "chrome_available",
-    "chrome_profile_available",
     "profile_configured",
     "settings_configured",
     "extension_configured",
@@ -92,10 +91,6 @@ def _openconnect_saml_available() -> bool:
     return importlib.util.find_spec("openconnect_saml") is not None
 
 
-def _chrome_status(profile_directory: str | None) -> tuple[bool, bool]:
-    return chrome_installation_status(profile_directory=profile_directory)
-
-
 def _cisco_connected() -> bool:
     binary = "/opt/cisco/secureclient/bin/vpn"
     if not shutil.which(binary):
@@ -123,7 +118,7 @@ def _load_tunnel() -> _Tunnel | None:
 class ReadinessDependencies:
     openconnect_available: Callable[[], bool] = _openconnect_available
     openconnect_saml_available: Callable[[], bool] = _openconnect_saml_available
-    chrome_status: Callable[[str | None], tuple[bool, bool]] = _chrome_status
+    chrome_status: Callable[[], bool] = chrome_installation_status
     native_host_configured: Callable[[str], bool] = native_host_configured
     privileged_component_installed: Callable[[str], bool] = (
         privileged_component_installed
@@ -174,9 +169,7 @@ def collect_readiness(
 
     openconnect = bool(dependencies.openconnect_available())
     openconnect_saml = bool(dependencies.openconnect_saml_available())
-    chrome_available, chrome_profile_available = dependencies.chrome_status(
-        settings.chrome_profile_directory if settings is not None else None
-    )
+    chrome_available = bool(dependencies.chrome_status())
     native_messaging = bool(
         settings is not None
         and dependencies.native_host_configured(settings.extension_id)
@@ -211,7 +204,8 @@ def collect_readiness(
         "openconnect": openconnect,
         "openconnect_saml": openconnect_saml,
         "chrome_available": bool(chrome_available),
-        "chrome_profile_available": bool(chrome_profile_available),
+        # Keep older menu apps compatible; Chrome now chooses its own profile.
+        "chrome_profile_available": chrome_available,
         "profile_configured": profile is not None,
         "settings_configured": settings is not None,
         "extension_configured": settings is not None,

@@ -1,4 +1,4 @@
-"""End-to-end SAML authentication using the configured Chrome profile."""
+"""End-to-end SAML authentication through Google Chrome."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from meraki_openconnect.authenticator import BrowserAuthRequest, build_moc_authe
 from meraki_openconnect.callback import TokenCallback
 from meraki_openconnect.chrome import (
     build_extension_start_url,
-    open_in_chrome_profile,
+    open_in_chrome,
 )
 from meraki_openconnect.pin import gateway_tls_evidence
 from meraki_openconnect.profile import OrganizationProfile
@@ -108,9 +108,7 @@ async def authenticate(
         }
         with TokenCallback(bootstrap) as callback:
             start_url = build_extension_start_url(browser.extension_id)
-            open_in_chrome_profile(
-                start_url, browser.chrome_profile_directory
-            )
+            open_in_chrome(start_url)
             token = await asyncio.to_thread(callback.wait)
         if gateway_tls_evidence(profile.gateway.host).spki_pin != server_cert_pin:
             raise AuthenticationError(

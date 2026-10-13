@@ -96,16 +96,20 @@ client. Meraki Connect does not currently import Cisco XML.
 The extension starts with no gateway access. Setup asks you to grant permission
 for the one exact HTTPS gateway in the validated organization profile.
 
+Setup and login open Chrome normally, without selecting a configured profile.
+The Chrome profile used must have the extension loaded and gateway permission
+granted. Existing settings with a Chrome profile directory remain readable,
+but that field is ignored.
+
 ## Run setup
 
-Run setup from a visible Terminal, replacing the candidate path, extension ID,
-and Chrome profile directory with your values:
+Run setup from a visible Terminal, replacing the candidate path and extension
+ID with your values:
 
 ```bash
 meraki-openconnect setup \
   "$HOME/.config/meraki-openconnect/profile-candidate.json" \
-  --extension-id "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
-  --chrome-profile-directory "Profile 1"
+  --extension-id "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 ```
 
 Setup displays the proposed organization policy before changing anything. It

@@ -312,7 +312,6 @@ final class VPNControllerTests: XCTestCase {
             openconnect: openconnect,
             openconnectSaml: true,
             chromeAvailable: true,
-            chromeProfileAvailable: true,
             profileConfigured: true,
             settingsConfigured: true,
             extensionConfigured: true,

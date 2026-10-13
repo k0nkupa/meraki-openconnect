@@ -74,7 +74,6 @@ def _parser() -> argparse.ArgumentParser:
     setup = subparsers.add_parser("setup")
     setup.add_argument("profile_path", type=Path)
     setup.add_argument("--extension-id", required=True)
-    setup.add_argument("--chrome-profile-directory", required=True)
     extension = subparsers.add_parser("extension")
     extension_subparsers = extension.add_subparsers(dest="extension_command", required=True)
     configure = extension_subparsers.add_parser("configure")
@@ -153,7 +152,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = run_setup(
                 parsed.profile_path,
                 BrowserSettings(
-                    chrome_profile_directory=parsed.chrome_profile_directory,
                     extension_id=parsed.extension_id,
                 ),
                 confirm=_confirm_setup,
