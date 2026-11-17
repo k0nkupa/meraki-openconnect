@@ -128,15 +128,41 @@ final class VPNController: ObservableObject {
                     phase = .connected(current)
                     return
                 }
-                if await handle.resultIfFinished() != nil {
+                if let result = await handle.resultIfFinished() {
                     connectHandle = nil
-                    setError("Meraki OpenConnect connect exited before a verified connection.")
+                    setError(connectFailureMessage(result))
                     return
                 }
                 try await sleep(.seconds(1))
             }
         } catch {
             setError("Unable to connect Meraki OpenConnect safely.")
+        }
+    }
+
+    private func connectFailureMessage(_ result: CommandResult) -> String {
+        // Match known CLI messages so private details in stderr stay out of the menu.
+        let line = result.stderr.split(whereSeparator: \.isNewline).last ?? ""
+        switch line {
+        case "meraki-openconnect: gateway TLS certificate verification failed",
+             "meraki-openconnect: gateway certificate pin changed; refusing connection":
+            return "The VPN gateway certificate could not be verified."
+        case "meraki-openconnect: Google Chrome could not be opened":
+            return "Google Chrome could not be opened for VPN sign-in."
+        case "meraki-openconnect: Chrome did not return a VPN token before timeout; check that the Chrome window used for login has the VPN extension and gateway permission",
+             "meraki-openconnect: VPN worker failed at auth: authentication-failed":
+            return "VPN sign-in did not complete. Check the Chrome window used for sign-in."
+        case "meraki-openconnect: VPN worker failed at cstp: connection-rejected":
+            return "The VPN gateway rejected the connection."
+        case "meraki-openconnect: tunnel verification failed":
+            return "The VPN tunnel failed its route, DNS, or connectivity checks."
+        case "meraki-openconnect: VPN worker cleanup failed":
+            return "The VPN connection failed and cleanup could not be confirmed."
+        case _ where line == "meraki-openconnect: DNS resolver setup failed"
+            || line.hasPrefix("meraki-openconnect: DNS resolver setup failed: "):
+            return "The VPN could not configure DNS."
+        default:
+            return "Meraki OpenConnect exited before a verified connection (exit \(result.exitCode))."
         }
     }
 

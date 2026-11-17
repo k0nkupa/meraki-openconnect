@@ -114,8 +114,26 @@ final class VPNControllerTests: XCTestCase {
 
         await controller.connect()
 
-        XCTAssertEqual(controller.phase, .error("Meraki OpenConnect connect exited before a verified connection."))
+        XCTAssertEqual(controller.phase, .error("Meraki OpenConnect exited before a verified connection (exit 1)."))
         XCTAssertFalse(controller.message?.contains("secret") ?? true)
+    }
+
+    func testConnectShowsKnownFailureWithoutOtherCLIOutput() async {
+        let failed = ConnectHandle(result: CommandResult(
+            exitCode: 3,
+            stdout: "",
+            stderr: "secret\nmeraki-openconnect: tunnel verification failed\n"
+        ))
+        let fake = FakeVPNCLI(
+            doctors: [.success(doctor())],
+            statuses: [.success(disconnected), .success(disconnected)],
+            handles: [failed]
+        )
+        let controller = VPNController(cli: fake, sleep: noSleep)
+
+        await controller.connect()
+
+        XCTAssertEqual(controller.phase, .error("The VPN tunnel failed its route, DNS, or connectivity checks."))
     }
 
     func testConnectDoesNotAutomaticallyRetry() async {
