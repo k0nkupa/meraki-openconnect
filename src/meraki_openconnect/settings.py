@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import base64
 import binascii
+import fcntl
 import ipaddress
 import json
+import os
 import re
 import unicodedata
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -228,6 +232,26 @@ class SettingsStore:
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise SettingsError("could not read settings") from exc
         return _from_payload(raw)
+
+    @contextmanager
+    def configuration_lock(self, *, create_directory: bool = False) -> Iterator[None]:
+        """Serialize changes to the profile, local settings, and privileged policy."""
+        try:
+            if create_directory:
+                self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+            descriptor = os.open(self.directory, os.O_RDONLY | os.O_DIRECTORY)
+        except OSError as exc:
+            raise SettingsError("could not open the configuration directory") from exc
+        try:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise SettingsError("another VPN configuration change is in progress") from exc
+            except OSError as exc:
+                raise SettingsError("could not lock the VPN configuration") from exc
+            yield
+        finally:
+            os.close(descriptor)
 
     def save(self, settings: MachineSettings) -> None:
         normalized = _validated(settings)

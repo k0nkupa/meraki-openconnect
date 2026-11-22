@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from meraki_openconnect.health import HealthCheckResult
+from meraki_openconnect.pin import TlsPeerEvidence
 from meraki_openconnect.profile import OrganizationProfile
 from meraki_openconnect.privileged import HELPER_PATH
 from meraki_openconnect.settings import MachineSettings
@@ -285,8 +286,8 @@ def test_controller_returns_webview_result_to_same_worker(
     original_save = store.save
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._browser_token", lambda *_args: "opaque-token")
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)
@@ -332,7 +333,10 @@ def test_pin_mismatch_stops_before_worker_start(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
     started = []
-    monkeypatch.setattr("meraki_openconnect.tunnel.gateway_tls_pin", lambda _gateway: "pin-sha256:changed")
+    monkeypatch.setattr(
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence("pin-sha256:changed", "", ""),
+    )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: started.append(True))
 
     with pytest.raises(TunnelError, match="certificate pin changed"):
@@ -383,8 +387,8 @@ def test_wrong_webview_host_is_rejected_without_echoing_query(
         [Frame(MessageType.WEBVIEW_REQUIRED, ("https://evil.example/login?secret=value",))]
     )
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr(
@@ -408,8 +412,8 @@ def test_failed_worker_message_is_sanitized(
 ):
     worker = FakeWorker([Frame(MessageType.FAILED, ("cstp", "connection-rejected"))])
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr(
@@ -432,8 +436,8 @@ def test_exceptional_worker_failure_forces_fixed_privileged_disconnect(
     worker = FakeWorker([Frame(MessageType.STAGE, ("unexpected",))])
     operations: list[str] = []
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr(
@@ -493,8 +497,8 @@ def test_failed_forced_disconnect_still_closes_worker_with_sanitized_error(
 ) -> None:
     worker = FakeWorker([Frame(MessageType.STAGE, ("unexpected",))])
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
 
@@ -531,8 +535,8 @@ def test_failed_live_checks_wait_for_disconnect_confirmation(
     store = TunnelStore(tmp_path)
     operations: list[str] = []
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)
@@ -577,8 +581,8 @@ def test_failed_live_checks_retain_state_when_resolver_cleanup_fails_twice(
     store = TunnelStore(tmp_path)
     operations: list[str] = []
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)
@@ -637,8 +641,8 @@ def test_keyboard_interrupt_retries_resolver_cleanup_and_retains_failed_state(
     store = TunnelStore(tmp_path)
     operations: list[str] = []
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)
@@ -683,8 +687,8 @@ def test_partial_multi_rule_resolver_failure_retains_state_when_cleanup_fails(
     operations: list[str] = []
     store = TunnelStore(tmp_path)
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)
@@ -724,8 +728,8 @@ def test_clean_dns_setup_rollback_skips_generic_resolver_cleanup(
     operations: list[str] = []
     store = TunnelStore(tmp_path)
     monkeypatch.setattr(
-        "meraki_openconnect.tunnel.gateway_tls_pin",
-        lambda _gateway: SETTINGS.server_cert_pin,
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence(SETTINGS.server_cert_pin, "", ""),
     )
     monkeypatch.setattr("meraki_openconnect.tunnel._start_worker", lambda: worker)
     monkeypatch.setattr("meraki_openconnect.tunnel._verify_worker", lambda _pid: True)

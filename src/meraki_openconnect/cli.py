@@ -25,6 +25,7 @@ from meraki_openconnect.native_host import (
 from meraki_openconnect.pin import PinError
 from meraki_openconnect.profile import OrganizationProfile, ProfileError
 from meraki_openconnect.readiness import Readiness, collect_readiness
+from meraki_openconnect.rotate_pin import PinRotationError, rotate_pin
 from meraki_openconnect.settings import (
     BrowserSettings,
     MachineSettings,
@@ -39,6 +40,7 @@ from meraki_openconnect.setup import (
     validate_profile_command,
 )
 from meraki_openconnect.tunnel import (
+    GatewayPinChanged,
     TunnelError,
     TunnelSession,
     TunnelStore,
@@ -64,6 +66,7 @@ def _parser() -> argparse.ArgumentParser:
         child.add_argument("--json", action="store_true")
     subparsers.add_parser("auth")
     subparsers.add_parser("connect")
+    subparsers.add_parser("rotate-pin", help="review and update the gateway pin")
     subparsers.add_parser("disconnect")
     profile = subparsers.add_parser("profile")
     profile_subparsers = profile.add_subparsers(
@@ -121,6 +124,15 @@ def _confirm_setup(summary: str) -> bool:
     return input("Type yes to continue setup: ").strip().lower() == "yes"
 
 
+def _confirm_pin_rotation(summary: str) -> bool:
+    print(summary)
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise PinRotationError(
+            "run meraki-openconnect rotate-pin in an interactive Terminal to approve the change"
+        )
+    return input("Type yes to approve this pin change: ").strip().lower() == "yes"
+
+
 def _report_tunnel_connected(
     session: TunnelSession, checks: tuple[HealthCheckResult, ...]
 ) -> None:
@@ -161,15 +173,27 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"{result.settings.installed_policy_digest}"
             )
             return 0
-        if parsed.command == "privileged":
-            if parsed.privileged_command == "install":
-                profile, settings = _load_runtime(settings_store)
-                install_privileged(profile, settings)
-                print("Meraki OpenConnect privileged helper installed")
+        if parsed.command == "rotate-pin":
+            try:
+                changed = rotate_pin(
+                    PROFILE_PATH, settings_store, confirm=_confirm_pin_rotation
+                )
+            except KeyboardInterrupt as exc:
+                raise PinRotationError("gateway pin rotation interrupted") from exc
+            if changed:
+                print("Gateway pin updated. Retry with meraki-openconnect connect.")
             else:
+                print("The live gateway pin matches the saved pin and privileged policy.")
+            return 0
+        if parsed.command == "privileged":
+            with settings_store.configuration_lock():
                 profile, settings = _load_runtime(settings_store)
-                uninstall_privileged(profile, settings)
-                print("Meraki OpenConnect privileged helper removed")
+                if parsed.privileged_command == "install":
+                    install_privileged(profile, settings)
+                    print("Meraki OpenConnect privileged helper installed")
+                else:
+                    uninstall_privileged(profile, settings)
+                    print("Meraki OpenConnect privileged helper removed")
             return 0
         if parsed.command == "extension":
             settings = settings_store.load()
@@ -219,6 +243,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise TunnelError("gateway certificate pin changed; refusing authentication")
         print("Meraki OpenConnect authentication completed; token discarded")
         return 0
+    except GatewayPinChanged as exc:
+        print(
+            "Run meraki-openconnect rotate-pin to review the gateway certificate change.",
+            file=sys.stderr,
+        )
+        print(f"meraki-openconnect: {exc}", file=sys.stderr)
+        return 3
     except (
         CallbackError,
         CallbackTimeout,
@@ -228,6 +259,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         NativeHostError,
         AuthenticationError,
         PinError,
+        PinRotationError,
         ProfileError,
         SettingsError,
         TunnelError,

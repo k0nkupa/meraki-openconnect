@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import subprocess
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
-import meraki_openconnect.setup as setup_module
+import meraki_openconnect.setup as setup_cli
 
 from meraki_openconnect.extension_setup import ExtensionPermissionReceipt
 from meraki_openconnect.profile import OrganizationProfile
@@ -17,7 +18,12 @@ from meraki_openconnect.privileged import (
 )
 from meraki_openconnect.root_policy import RenderedRootPolicy
 from meraki_openconnect.service import AuthenticationResult
-from meraki_openconnect.settings import BrowserSettings, MachineSettings
+from meraki_openconnect.settings import (
+    BrowserSettings,
+    MachineSettings,
+    SettingsError,
+    SettingsStore,
+)
 from meraki_openconnect.setup import (
     SetupCancelled,
     SetupDependencies,
@@ -39,6 +45,7 @@ POLICY_DIGEST = "sha256:" + "2" * 64
 
 def _dependencies(events: list[str]) -> SetupDependencies:
     return SetupDependencies(
+        configuration_lock=nullcontext,
         load_profile=lambda path: events.append("validate-profile") or PROFILE,
         validate_browser=lambda browser: events.append("validate-browser") or browser,
         load_existing_settings=lambda: events.append("load-existing-settings") or None,
@@ -91,14 +98,32 @@ def test_permission_setup_opens_chrome_without_a_profile(monkeypatch, tmp_path: 
         def wait(self):
             return self.receipt
 
-    monkeypatch.setattr(setup_module, "ExtensionSetupCallback", Callback)
-    monkeypatch.setattr(setup_module, "open_in_chrome", lambda url: launched.append(url))
+    monkeypatch.setattr(setup_cli, "ExtensionSetupCallback", Callback)
+    monkeypatch.setattr(setup_cli, "open_in_chrome", lambda url: launched.append(url))
     dependencies = _dependencies([])
-    dependencies.grant_extension_origin = setup_module._default_grant_extension_origin
+    dependencies.grant_extension_origin = setup_cli._default_grant_extension_origin
     result = run_setup(tmp_path / "candidate.json", BROWSER, confirm=lambda _summary: True,
                        dependencies=dependencies)
     assert result.settings.extension_id == BROWSER.extension_id
     assert launched == [f"chrome-extension://{BROWSER.extension_id}/setup.html"]
+
+
+def test_setup_stops_before_changes_when_configuration_is_locked(tmp_path: Path) -> None:
+    store = SettingsStore(tmp_path)
+    events: list[str] = []
+    dependencies = _dependencies(events)
+    dependencies.configuration_lock = store.configuration_lock
+
+    with store.configuration_lock():
+        with pytest.raises(SettingsError, match="configuration change is in progress"):
+            run_setup(
+                tmp_path / "candidate.json",
+                BROWSER,
+                confirm=lambda _: True,
+                dependencies=dependencies,
+            )
+
+    assert events == ["validate-profile", "validate-browser"]
 
 
 def test_setup_success_has_explicit_order_and_final_receipts(tmp_path: Path) -> None:
@@ -219,9 +244,9 @@ def test_existing_pin_change_requires_separate_approval_before_browser_auth(
         )
 
     assert len(confirmations) == 2
-    assert "TLS certificate pin has changed" in confirmations[1]
-    assert f"Previously trusted pin: {OLD_PIN}" in confirmations[1]
-    assert f"Newly observed pin: {PIN}" in confirmations[1]
+    assert "Gateway: vpn.example.com" in confirmations[1]
+    assert f"Saved public-key fingerprint: {OLD_PIN}" in confirmations[1]
+    assert f"Observed public-key fingerprint: {PIN}" in confirmations[1]
     assert events[-1] == "probe-server-pin"
     assert "configure-native-host" not in events
     assert "grant-extension-origin" not in events

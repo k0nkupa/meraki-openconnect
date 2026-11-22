@@ -20,7 +20,7 @@ from meraki_openconnect.chrome import (
     build_extension_start_url,
     open_in_chrome,
 )
-from meraki_openconnect.pin import gateway_tls_pin
+from meraki_openconnect.pin import gateway_tls_evidence
 from meraki_openconnect.health import HealthCheckResult, run_health_checks
 from meraki_openconnect.privileged import installed_policy_digest
 from meraki_openconnect.privileged import (
@@ -54,6 +54,10 @@ _FAILURES = {
 
 class TunnelError(RuntimeError):
     """The fixed Meraki OpenConnect tunnel worker failed or violated its protocol."""
+
+
+class GatewayPinChanged(TunnelError):
+    """The gateway's observed public key differs from the configured pin."""
 
 
 class _DnsSetupError(TunnelError):
@@ -455,8 +459,8 @@ def run_tunnel(
     _require_readiness(profile, settings)
     if store.load(profile.gateway.host) is not None:
         raise TunnelError("a Meraki OpenConnect tunnel is already recorded")
-    if gateway_tls_pin(profile.gateway.host) != settings.server_cert_pin:
-        raise TunnelError("gateway certificate pin changed; refusing connection")
+    if not gateway_tls_evidence(profile.gateway.host).matches_pin(settings.server_cert_pin):
+        raise GatewayPinChanged("gateway certificate pin changed; refusing connection")
 
     worker = _start_worker()
     connected: TunnelSession | None = None

@@ -5,6 +5,7 @@ description = "Source-first macOS OpenConnect client for Meraki-compatible VPNs"
 requires-python = ">=3.13,<3.14"
 license = "GPL-3.0-or-later"
 dependencies = [
+  "cryptography>=49,<50",
   "lxml>=5,<7",
   "openconnect-saml[chrome]==0.24.5",
   "requests>=2.32,<3",

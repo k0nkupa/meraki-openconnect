@@ -59,15 +59,19 @@ def test_callback_exchanges_bootstrap_and_token_over_private_user_socket():
     assert not socket_path.exists()
 
 
-def test_missing_browser_handoff_has_bounded_actionable_guidance(tmp_path: Path):
-    with TokenCallback(
-        {"loginUrl": "https://example.com/login", "cookies": []},
-        timeout_seconds=0.01,
-        state_directory=tmp_path,
-    ) as callback:
-        with pytest.raises(CallbackTimeout, match="Chrome window used for login has the VPN extension"):
-            callback.wait()
-    assert not (tmp_path / ACTIVE_AUTH_FILE).exists()
+def test_missing_browser_handoff_has_bounded_actionable_guidance():
+    with tempfile.TemporaryDirectory(prefix="meraki-openconnect-test-", dir="/tmp") as temporary:
+        state_directory = Path(temporary)
+        with TokenCallback(
+            {"loginUrl": "https://example.com/login", "cookies": []},
+            timeout_seconds=0.01,
+            state_directory=state_directory,
+        ) as callback:
+            with pytest.raises(
+                CallbackTimeout, match="Chrome window used for login has the VPN extension"
+            ):
+                callback.wait()
+        assert not (state_directory / ACTIVE_AUTH_FILE).exists()
 
 
 def test_callback_shutdown_stops_idle_accept_thread():

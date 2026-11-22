@@ -189,12 +189,26 @@ readiness problem, and never invents organization-specific setup commands.
 **Quit disconnects** an active tunnel and verifies cleanup before exiting.
 Force Quit makes no cleanup guarantee.
 
-## Certificate pin changes
+## Rotate the gateway certificate pin
 
-A changed gateway certificate is treated as a security event, not an automatic
-update. Independently verify the new certificate with your VPN administrator,
-then rerun the complete setup command. Do not edit `settings.json` or the
-root-owned policy by hand.
+If `connect` reports a changed pin, confirm the certificate rotation with your
+VPN administrator. Run this command from a visible Terminal:
+
+```bash
+meraki-openconnect rotate-pin
+```
+
+The command verifies the live certificate's trust chain and checks that the
+certificate lists the gateway's exact hostname. Compare the displayed
+fingerprints before approving the change. The installer and the
+read-only policy check can prompt for administrator authorization. Rotation
+uses your active profile and Chrome configuration without opening Chrome.
+
+If the update is interrupted, rerun `meraki-openconnect rotate-pin` to verify
+the certificate again and finish the update. If the privileged policy matches
+neither the saved pin nor the live pin, run `meraki-openconnect privileged install`
+to restore the saved policy, then rerun `meraki-openconnect rotate-pin`.
+After rotation succeeds, retry `meraki-openconnect connect`.
 
 ## Uninstall
 
