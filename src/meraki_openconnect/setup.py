@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -17,7 +18,7 @@ from meraki_openconnect.extension_setup import (
     ExtensionSetupCallback,
 )
 from meraki_openconnect.native_host import configure_native_host
-from meraki_openconnect.pin import gateway_tls_pin
+from meraki_openconnect.pin import gateway_tls_pin, pin_change_summary
 from meraki_openconnect.privileged import (
     HELPER_PATH,
     NATIVE_PATH,
@@ -136,6 +137,9 @@ class SetupDependencies:
     validate_browser: Callable[[BrowserSettings], BrowserSettings] = (
         validate_browser_settings
     )
+    configuration_lock: Callable[[], AbstractContextManager[None]] = (
+        lambda: SettingsStore().configuration_lock(create_directory=True)
+    )
     load_existing_settings: Callable[[], MachineSettings | None] = (
         _load_existing_settings
     )
@@ -199,21 +203,6 @@ def _setup_summary(profile: OrganizationProfile) -> str:
     )
 
 
-def _pin_change_summary(
-    profile: OrganizationProfile,
-    previous_pin: str,
-    observed_pin: str,
-) -> str:
-    return (
-        f"The verified TLS certificate pin has changed for "
-        f"{profile.gateway.host}.\n"
-        f"Previously trusted pin: {previous_pin}\n"
-        f"Newly observed pin: {observed_pin}\n"
-        "Approve this change only after verifying that the organization "
-        "intentionally replaced the gateway certificate."
-    )
-
-
 def validate_profile_command(path: Path) -> dict[str, object]:
     """Validate a candidate profile without changing local or external state."""
     if not path.is_absolute():
@@ -244,6 +233,16 @@ def run_setup(
     if not confirm(_setup_summary(profile)):
         raise SetupCancelled("setup was cancelled before making changes")
 
+    with dependencies.configuration_lock():
+        return _run_approved_setup(profile, browser, confirm, dependencies)
+
+
+def _run_approved_setup(
+    profile: OrganizationProfile,
+    browser: BrowserSettings,
+    confirm: Callable[[str], bool],
+    dependencies: SetupDependencies,
+) -> SetupResult:
     existing_settings = dependencies.load_existing_settings()
     if existing_settings is None and dependencies.privileged_policy_present():
         raise SetupInputError(
@@ -255,8 +254,8 @@ def run_setup(
         existing_settings is not None
         and existing_settings.server_cert_pin != server_cert_pin
         and not confirm(
-            _pin_change_summary(
-                profile,
+            pin_change_summary(
+                profile.gateway.host,
                 existing_settings.server_cert_pin,
                 server_cert_pin,
             )

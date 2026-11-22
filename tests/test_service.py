@@ -68,7 +68,7 @@ def test_expected_pin_mismatch_stops_before_authenticator_creation(monkeypatch):
     monkeypatch.setattr(
         "meraki_openconnect.service.gateway_tls_evidence",
         lambda _gateway: events.append("pin")
-        or TlsPeerEvidence("pin-sha256:changed", "b" * 64),
+        or TlsPeerEvidence("pin-sha256:changed", "b" * 64, "c" * 40),
         raising=False,
     )
     monkeypatch.setattr(
@@ -95,8 +95,8 @@ def test_browser_token_is_rejected_if_gateway_spki_changes_during_authentication
     changed_pin = "pin-sha256:" + "B" * 43 + "="
     evidence = iter(
         (
-            TlsPeerEvidence(expected_pin, "a" * 64),
-            TlsPeerEvidence(changed_pin, "b" * 64),
+            TlsPeerEvidence(expected_pin, "a" * 64, "c" * 40),
+            TlsPeerEvidence(changed_pin, "b" * 64, "c" * 40),
         )
     )
     events: list[str] = []

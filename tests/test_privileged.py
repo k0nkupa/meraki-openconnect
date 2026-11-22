@@ -765,17 +765,50 @@ def test_install_transaction_locks_refuses_tunnel_and_rolls_back() -> None:
     assert "experimental.pid" not in install
 
 
-@pytest.mark.parametrize("failed_move", range(1, 7))
-def test_install_backup_failure_restores_every_original_component(
+@pytest.mark.parametrize("drifted", [False, True])
+def test_rotation_installer_compares_saved_policy_under_lock(
+    tmp_path: Path, drifted: bool
+) -> None:
+    expected = render_root_policy(PROFILE, SETTINGS.server_cert_pin).text.encode()
+    plan = build_install_plan(PROFILE, SETTINGS, "tony", expected_policy=expected)
+    script = plan.install_script
+    guard_start = '/usr/bin/base64 -D > "$PAYLOAD/expected-policy.conf"'
+    assert script.index('/usr/bin/shlock -f "$INSTALL_LOCK"') < script.index(guard_start)
+    guard = script[script.index(guard_start):script.index("\nHELPER_TEMP=")]
+    policy = tmp_path / "policy.conf"
+    existing = b"different policy" if drifted else expected
+    policy.write_bytes(existing)
+    result = subprocess.run(
+        ["/bin/sh", "-eu"],
+        env={**os.environ, "PAYLOAD": str(tmp_path)},
+        input=guard.replace(POLICY_PATH, '"$PAYLOAD/policy.conf"'),
+        text=True,
+        check=False,
+    )
+    assert result.returncode == (42 if drifted else 0)
+    assert policy.read_bytes() == existing
+
+
+@pytest.mark.parametrize("failed_move", [*range(1, 7), None])
+def test_install_failure_restores_every_original_component(
     tmp_path: Path,
-    failed_move: int,
+    failed_move: int | None,
 ) -> None:
     install = build_install_plan(PROFILE, SETTINGS, "tony").install_script
-    fragment = install[
-        install.index("HELPER_TEMP=") : install.index(
-            '/usr/bin/install -o root -g wheel -m 0755 "$PAYLOAD/meraki-openconnect-root"'
-        )
-    ]
+    staging_start = install.index(
+        '/usr/bin/install -o root -g wheel -m 0755 "$PAYLOAD/meraki-openconnect-root"'
+    )
+    fragment = install[install.index("HELPER_TEMP=") : staging_start]
+    if failed_move is None:
+        fragment += """\
+/bin/mkdir "$LIBRARY_TEMP"
+/usr/bin/touch "$NATIVE_TEMP" "$VPNC_TEMP"
+/usr/bin/printf '%s\\n' 'unexpected policy' > "$POLICY_TEMP"
+"""
+        fragment += install[
+            install.index("\nLIBRARY_ACTIVATED=1\n") :
+            install.index("\nSUDOERS_ACTIVATED=1\n")
+        ]
     case_root = tmp_path / f"failure-{failed_move}"
     case_root.mkdir()
     replacements = {
@@ -815,6 +848,9 @@ def test_install_backup_failure_restores_every_original_component(
     fragment = fragment.replace("/bin/mv", str(fake_mv))
     payload = case_root / "payload"
     payload.mkdir()
+    (payload / "policy.conf").write_text(
+        render_root_policy(PROFILE, SETTINGS.server_cert_pin).text, encoding="utf-8"
+    )
     script = f"""#!/bin/sh
 set -eu
 PAYLOAD={payload}
@@ -838,6 +874,21 @@ INSTALL_LOCK={case_root / "operation.lock"}
     assert result.returncode != 0
     for original, content in originals.items():
         assert original.read_bytes() == content
+
+
+@pytest.mark.parametrize("status", [0, 1, 2])
+def test_policy_contents_check_uses_privileged_read_only_comparison(
+    monkeypatch: pytest.MonkeyPatch, status: int
+) -> None:
+    expected = b"synthetic policy"
+
+    def runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        assert args == ["/usr/bin/sudo", "--", "/usr/bin/cmp", "-s", "-", POLICY_PATH]
+        assert kwargs["input"] == expected
+        return subprocess.CompletedProcess(args, status)
+
+    monkeypatch.setattr(privileged.subprocess, "run", runner)
+    assert privileged.installed_policy_matches(expected) is (status == 0)
 
 
 def test_install_command_streams_one_immutable_payload_to_sudo_stdin(

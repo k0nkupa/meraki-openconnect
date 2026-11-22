@@ -53,11 +53,16 @@ _POLICY_DIGEST = re.compile(r"sha256:[0-9a-f]{64}\n\Z")
 HOMEBREW_PREFIX = Path("/opt/homebrew")
 _SYSTEM_LIBRARY_PREFIXES = ("/usr/lib/", "/System/Library/")
 _PAYLOAD_MARKER = "__MERAKI_OPENCONNECT_PAYLOAD_BASE64__"
+_INSTALLED_POLICY_CHANGED_STATUS = 42
 _RESOLVER_MARKER = "# meraki-openconnect managed resolver"
 
 
 class PrivilegedError(RuntimeError):
     """The fixed privileged helper could not be safely configured."""
+
+
+class InstalledPolicyChanged(PrivilegedError):
+    """The installed policy no longer matches the expected saved policy."""
 
 
 def _path_has_no_extended_acl(path: str) -> bool:
@@ -480,7 +485,19 @@ def _sudoers_text(username: str) -> str:
     return f"{username} ALL=(root) NOPASSWD: {operations}\n"
 
 
-def _install_script() -> str:
+def _install_script(expected_policy: bytes | None = None) -> str:
+    verify_saved_policy = ""
+    if expected_policy is not None:
+        expected_base64 = base64.b64encode(expected_policy).decode("ascii")
+        verify_saved_policy = f"""\
+/usr/bin/base64 -D > "$PAYLOAD/expected-policy.conf" <<'MERAKI_OPENCONNECT_EXPECTED_POLICY'
+{expected_base64}
+MERAKI_OPENCONNECT_EXPECTED_POLICY
+if [ ! -f {POLICY_PATH} ] || [ -L {POLICY_PATH} ] ||
+    ! /usr/bin/cmp -s "$PAYLOAD/expected-policy.conf" {POLICY_PATH}; then
+  exit {_INSTALLED_POLICY_CHANGED_STATUS}
+fi
+"""
     return f"""#!/bin/sh
 set -eu
 umask 077
@@ -534,7 +551,7 @@ INSTALL_LOCK={INSTALL_LOCK_PATH}
 /usr/bin/shlock -f "$INSTALL_LOCK" -p $$ || exit 1
 trap '/bin/rm -rf "$PAYLOAD"; /bin/rm -f "$INSTALL_LOCK"' EXIT HUP INT TERM
 [ ! -e {TUNNEL_PID_PATH} ] || exit 1
-HELPER_TEMP={HELPER_PATH}.meraki-openconnect.$$
+{verify_saved_policy}HELPER_TEMP={HELPER_PATH}.meraki-openconnect.$$
 NATIVE_TEMP={NATIVE_PATH}.meraki-openconnect.$$
 VPNC_TEMP={VPNC_SCRIPT_PATH}.meraki-openconnect.$$
 LIBRARY_TEMP={RUNTIME_LIBRARY_PATH}.meraki-openconnect.$$
@@ -617,6 +634,7 @@ NATIVE_ACTIVATED=1
 /bin/mv -f "$NATIVE_TEMP" {NATIVE_PATH}
 POLICY_ACTIVATED=1
 /bin/mv -f "$POLICY_TEMP" {POLICY_PATH}
+/usr/bin/cmp -s "$PAYLOAD/policy.conf" {POLICY_PATH}
 SUDOERS_ACTIVATED=1
 /bin/mv -f "$SUDOERS_TEMP" {SUDOERS_PATH}
 HELPER_ACTIVATED=1
@@ -683,6 +701,8 @@ def build_install_plan(
     profile: OrganizationProfile,
     settings: MachineSettings,
     username: str,
+    *,
+    expected_policy: bytes | None = None,
 ) -> PrivilegedInstallPlan:
     """Render immutable root payloads for one validated organization profile."""
     if settings.extension_gateway_origin != f"https://{profile.gateway.host}":
@@ -700,7 +720,7 @@ def build_install_plan(
         helper_text=_helper_text(profile, rendered.digest),
         policy_text=rendered.text,
         sudoers_text=_sudoers_text(username),
-        install_script=_install_script(),
+        install_script=_install_script(expected_policy),
         uninstall_script=_uninstall_script(
             (rule.domain, rule.nameservers) for rule in profile.split_dns
         ),
@@ -724,6 +744,16 @@ def installed_policy_digest() -> str | None:
     if result.returncode != 0 or not _POLICY_DIGEST.fullmatch(result.stdout):
         return None
     return result.stdout[:-1]
+
+
+def installed_policy_matches(expected: bytes) -> bool:
+    """Compare the root-owned policy with expected bytes without exposing its contents."""
+    result = subprocess.run(
+        ["/usr/bin/sudo", "--", "/usr/bin/cmp", "-s", "-", POLICY_PATH],
+        input=expected,
+        check=False,
+    )
+    return result.returncode == 0
 
 
 def _archive_payload(directory: Path, plan: PrivilegedInstallPlan) -> bytes:
@@ -1033,9 +1063,12 @@ def install_privileged(
     settings: MachineSettings,
     *,
     username: str | None = None,
+    expected_policy: bytes | None = None,
 ) -> None:
     """Install the fixed helper through one interactive, user-invoked sudo command."""
-    plan = build_install_plan(profile, settings, username or getpass.getuser())
+    plan = build_install_plan(
+        profile, settings, username or getpass.getuser(), expected_policy=expected_policy
+    )
     with tempfile.TemporaryDirectory(
         prefix="meraki-openconnect-install-"
     ) as temporary:
@@ -1043,9 +1076,14 @@ def install_privileged(
         directory.chmod(0o700)
         _build_native_worker(directory / "meraki-openconnect-native")
         installer = _installation_input(directory, plan)
-        subprocess.run(
-            ["/usr/bin/sudo", "/bin/sh"], check=True, input=installer
-        )
+        try:
+            subprocess.run(
+                ["/usr/bin/sudo", "/bin/sh"], check=True, input=installer
+            )
+        except subprocess.CalledProcessError as exc:
+            if expected_policy is not None and exc.returncode == _INSTALLED_POLICY_CHANGED_STATUS:
+                raise InstalledPolicyChanged("the installed policy has changed") from exc
+            raise
 
 
 def uninstall_privileged(

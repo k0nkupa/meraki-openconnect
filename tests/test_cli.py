@@ -1,10 +1,11 @@
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
 
 from meraki_openconnect.cli import main
-from meraki_openconnect.pin import PinError
+from meraki_openconnect.pin import PinError, TlsPeerEvidence
 from meraki_openconnect.profile import OrganizationProfile
 from meraki_openconnect.readiness import Readiness
 from meraki_openconnect.service import AuthenticationResult
@@ -235,6 +236,9 @@ def test_privileged_install_uses_active_profile_and_settings(monkeypatch, capsys
     installed = []
 
     monkeypatch.setattr(
+        "meraki_openconnect.cli.SettingsStore.configuration_lock", lambda _store: nullcontext()
+    )
+    monkeypatch.setattr(
         "meraki_openconnect.cli._load_runtime", lambda _store: (PROFILE, SETTINGS)
     )
     monkeypatch.setattr(
@@ -271,6 +275,27 @@ def test_connect_routes_only_to_native_tunnel(monkeypatch, capsys):
 
     assert calls[0][:2] == (PROFILE, SETTINGS)
     assert "Meraki OpenConnect tunnel disconnected" in capsys.readouterr().out
+
+
+def test_connect_pin_mismatch_points_to_rotation_before_starting_worker(
+    monkeypatch, capsys
+):
+    monkeypatch.setattr(
+        "meraki_openconnect.cli._load_runtime", lambda _store: (PROFILE, SETTINGS)
+    )
+    monkeypatch.setattr("meraki_openconnect.cli._cisco_connected", lambda: False)
+    monkeypatch.setattr("meraki_openconnect.tunnel._require_readiness", lambda *_: None)
+    monkeypatch.setattr("meraki_openconnect.tunnel.TunnelStore.load", lambda *_: None)
+    monkeypatch.setattr(
+        "meraki_openconnect.tunnel.gateway_tls_evidence",
+        lambda _gateway: TlsPeerEvidence("pin-sha256:changed", "", ""),
+    )
+    monkeypatch.setattr(
+        "meraki_openconnect.tunnel._start_worker", lambda: pytest.fail("worker started")
+    )
+
+    assert main(["connect"]) == 3
+    assert "meraki-openconnect rotate-pin" in capsys.readouterr().err
 
 
 def test_auth_verifies_saved_pin_before_browser_authentication(monkeypatch, capsys):

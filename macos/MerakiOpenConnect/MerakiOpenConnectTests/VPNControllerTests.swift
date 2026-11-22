@@ -136,6 +136,27 @@ final class VPNControllerTests: XCTestCase {
         XCTAssertEqual(controller.phase, .error("The VPN tunnel failed its route, DNS, or connectivity checks."))
     }
 
+    func testConnectShowsTerminalPinRotationGuidance() async {
+        let failed = ConnectHandle(result: CommandResult(
+            exitCode: 3,
+            stdout: "",
+            stderr: "meraki-openconnect: gateway certificate pin changed; refusing connection\n"
+        ))
+        let fake = FakeVPNCLI(
+            doctors: [.success(doctor())],
+            statuses: [.success(disconnected), .success(disconnected)],
+            handles: [failed]
+        )
+        let controller = VPNController(cli: fake, sleep: noSleep)
+
+        await controller.connect()
+
+        XCTAssertEqual(
+            controller.phase,
+            .error("The VPN gateway public key changed. Run meraki-openconnect rotate-pin in Terminal.")
+        )
+    }
+
     func testConnectDoesNotAutomaticallyRetry() async {
         let failed = ConnectHandle(result: CommandResult(exitCode: 1, stdout: "", stderr: ""))
         let fake = FakeVPNCLI(

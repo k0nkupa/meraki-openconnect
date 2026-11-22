@@ -144,9 +144,10 @@ final class VPNController: ObservableObject {
         // Match known CLI messages so private details in stderr stay out of the menu.
         let line = result.stderr.split(whereSeparator: \.isNewline).last ?? ""
         switch line {
-        case "meraki-openconnect: gateway TLS certificate verification failed",
-             "meraki-openconnect: gateway certificate pin changed; refusing connection":
+        case "meraki-openconnect: gateway TLS certificate verification failed":
             return "The VPN gateway certificate could not be verified."
+        case "meraki-openconnect: gateway certificate pin changed; refusing connection":
+            return "The VPN gateway public key changed. Run meraki-openconnect rotate-pin in Terminal."
         case "meraki-openconnect: Google Chrome could not be opened":
             return "Google Chrome could not be opened for VPN sign-in."
         case "meraki-openconnect: Chrome did not return a VPN token before timeout; check that the Chrome window used for login has the VPN extension and gateway permission",
